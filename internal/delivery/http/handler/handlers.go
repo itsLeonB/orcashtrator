@@ -1,0 +1,31 @@
+package handler
+
+import (
+	"github.com/itsLeonB/orcashtrator/internal/provider"
+)
+
+type Handlers struct {
+	Auth           *AuthHandler
+	Friendship     *FriendshipHandler
+	Profile        *ProfileHandler
+	TransferMethod *TransferMethodHandler
+	Debt           *DebtHandler
+	GroupExpense   *GroupExpenseHandler
+	ExpenseItem    *ExpenseItemHandler
+	OtherFee       *OtherFeeHandler
+	ExpenseBill    *ExpenseBillHandler
+}
+
+func ProvideHandlers(services *provider.Services) *Handlers {
+	return &Handlers{
+		NewAuthHandler(services.Auth),
+		NewFriendshipHandler(services.Friendship, services.FriendDetails),
+		NewProfileHandler(services.Profile),
+		NewTransferMethodHandler(services.TransferMethod),
+		NewDebtHandler(services.Debt),
+		NewGroupExpenseHandler(services.GroupExpense),
+		NewExpenseItemHandler(services.ExpenseItem),
+		NewOtherFeeHandler(services.OtherFee),
+		NewExpenseBillHandler(services.ExpenseBill),
+	}
+}
