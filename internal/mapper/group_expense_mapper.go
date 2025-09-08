@@ -124,27 +124,6 @@ func otherFeeRequestToData(req dto.NewOtherFeeRequest) otherfee.OtherFeeData {
 	}
 }
 
-func OtherFeeRequestToEntity(request dto.NewOtherFeeRequest) otherfee.OtherFee {
-	return otherfee.OtherFee{
-		GroupExpenseID: request.GroupExpenseID,
-		OtherFeeData:   otherFeeRequestToData(request),
-	}
-}
-
-func PatchExpenseItemWithRequest(expenseItem expenseitem.ExpenseItem, request dto.UpdateExpenseItemRequest) expenseitem.ExpenseItem {
-	expenseItem.Name = request.Name
-	expenseItem.Amount = request.Amount
-	expenseItem.Quantity = request.Quantity
-	return expenseItem
-}
-
-func ItemParticipantRequestToEntity(itemParticipant dto.ItemParticipantRequest) expenseitem.ItemParticipant {
-	return expenseitem.ItemParticipant{
-		ProfileID: itemParticipant.ProfileID,
-		Share:     itemParticipant.Share,
-	}
-}
-
 func ExpenseParticipantToResponse(expenseParticipant groupexpense.ExpenseParticipant, userProfileID uuid.UUID, participantProfileName string) dto.ExpenseParticipantResponse {
 	return dto.ExpenseParticipantResponse{
 		ProfileName: participantProfileName,
@@ -158,13 +137,6 @@ func getExpenseParticipantSimpleMapper(userProfileID uuid.UUID, namesByProfileID
 	return func(ep groupexpense.ExpenseParticipant) dto.ExpenseParticipantResponse {
 		return ExpenseParticipantToResponse(ep, userProfileID, namesByProfileID[ep.ProfileID])
 	}
-}
-
-func PatchOtherFeeWithRequest(otherFee otherfee.OtherFee, request dto.UpdateOtherFeeRequest) otherfee.OtherFee {
-	otherFee.Name = request.Name
-	otherFee.Amount = request.Amount
-	otherFee.CalculationMethod = request.CalculationMethod
-	return otherFee
 }
 
 func ExpenseParticipantToData(participant groupexpense.ExpenseParticipant) (debt.ExpenseParticipantData, error) {

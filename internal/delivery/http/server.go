@@ -18,7 +18,7 @@ func Setup(configs config.Config) *ginkgo.HttpServer {
 	registerRoutes(r, configs, providers.Logger, providers.Services)
 
 	srv := &http.Server{
-		Addr:              fmt.Sprintf(":%s", configs.App.Port),
+		Addr:              fmt.Sprintf(":%s", configs.Port),
 		Handler:           r,
 		ReadTimeout:       configs.Timeout,
 		ReadHeaderTimeout: configs.Timeout,
