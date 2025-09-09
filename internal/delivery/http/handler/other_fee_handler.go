@@ -10,6 +10,7 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/service"
+	"github.com/itsLeonB/orcashtrator/internal/util"
 )
 
 type OtherFeeHandler struct {
@@ -26,6 +27,12 @@ func NewOtherFeeHandler(
 
 func (geh *OtherFeeHandler) HandleAdd() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -38,6 +45,7 @@ func (geh *OtherFeeHandler) HandleAdd() gin.HandlerFunc {
 			return
 		}
 
+		request.UserProfileID = userProfileID
 		request.GroupExpenseID = groupExpenseID
 
 		response, err := geh.otherFeeSvc.Add(ctx, request)
@@ -55,6 +63,12 @@ func (geh *OtherFeeHandler) HandleAdd() gin.HandlerFunc {
 
 func (geh *OtherFeeHandler) HandleUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -73,6 +87,7 @@ func (geh *OtherFeeHandler) HandleUpdate() gin.HandlerFunc {
 			return
 		}
 
+		request.UserProfileID = userProfileID
 		request.GroupExpenseID = groupExpenseID
 		request.ID = otherFeeID
 
@@ -91,6 +106,12 @@ func (geh *OtherFeeHandler) HandleUpdate() gin.HandlerFunc {
 
 func (geh *OtherFeeHandler) HandleRemove() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -103,7 +124,7 @@ func (geh *OtherFeeHandler) HandleRemove() gin.HandlerFunc {
 			return
 		}
 
-		if err = geh.otherFeeSvc.Remove(ctx, groupExpenseID, feeID); err != nil {
+		if err = geh.otherFeeSvc.Remove(ctx, groupExpenseID, feeID, userProfileID); err != nil {
 			_ = ctx.Error(err)
 			return
 		}

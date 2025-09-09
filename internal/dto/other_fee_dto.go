@@ -33,6 +33,7 @@ type OtherFeeResponse struct {
 }
 
 type NewOtherFeeRequest struct {
+	UserProfileID     uuid.UUID                        `json:"-"`
 	GroupExpenseID    uuid.UUID                        `json:"-"`
 	Name              string                           `json:"name" binding:"required,min=3"`
 	Amount            decimal.Decimal                  `json:"amount" binding:"required"`
@@ -40,6 +41,7 @@ type NewOtherFeeRequest struct {
 }
 
 type UpdateOtherFeeRequest struct {
+	UserProfileID     uuid.UUID                        `json:"-"`
 	ID                uuid.UUID                        `json:"-"`
 	GroupExpenseID    uuid.UUID                        `json:"-"`
 	Name              string                           `json:"name" binding:"required,min=3"`

@@ -8,7 +8,6 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/expenseitem"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/mapper"
-	"github.com/itsLeonB/orcashtrator/internal/util"
 	"github.com/itsLeonB/ungerr"
 )
 
@@ -28,17 +27,12 @@ func NewExpenseItemService(
 }
 
 func (ges *expenseItemServiceImpl) Add(ctx context.Context, req dto.NewExpenseItemRequest) (dto.ExpenseItemResponse, error) {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.ExpenseItemResponse{}, err
-	}
-
 	if !req.Amount.IsPositive() {
 		return dto.ExpenseItemResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNonPositiveAmount)
 	}
 
 	request := expenseitem.AddRequest{
-		ProfileID:       profileID,
+		ProfileID:       req.UserProfileID,
 		GroupExpenseID:  req.GroupExpenseID,
 		ExpenseItemData: mapper.NewExpenseItemRequestToData(req),
 	}
@@ -48,22 +42,17 @@ func (ges *expenseItemServiceImpl) Add(ctx context.Context, req dto.NewExpenseIt
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	profileIDs := []uuid.UUID{profileID}
+	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
 	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, profileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, namesByProfileID), nil
 }
 
-func (ges *expenseItemServiceImpl) GetDetails(ctx context.Context, groupExpenseID, expenseItemID uuid.UUID) (dto.ExpenseItemResponse, error) {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.ExpenseItemResponse{}, err
-	}
-
+func (ges *expenseItemServiceImpl) GetDetails(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) (dto.ExpenseItemResponse, error) {
 	request := expenseitem.GetDetailsRequest{
 		ID:             expenseItemID,
 		GroupExpenseID: groupExpenseID,
@@ -74,28 +63,23 @@ func (ges *expenseItemServiceImpl) GetDetails(ctx context.Context, groupExpenseI
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	profileIDs := []uuid.UUID{profileID}
+	profileIDs := []uuid.UUID{userProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
 	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, profileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, userProfileID, namesByProfileID), nil
 }
 
 func (ges *expenseItemServiceImpl) Update(ctx context.Context, req dto.UpdateExpenseItemRequest) (dto.ExpenseItemResponse, error) {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.ExpenseItemResponse{}, err
-	}
-
 	if !req.Amount.IsPositive() {
 		return dto.ExpenseItemResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNonPositiveAmount)
 	}
 
 	request := expenseitem.UpdateRequest{
-		ProfileID:       profileID,
+		ProfileID:       req.UserProfileID,
 		ID:              req.ID,
 		GroupExpenseID:  req.GroupExpenseID,
 		ExpenseItemData: mapper.UpdateExpenseItemRequestToData(req),
@@ -106,24 +90,19 @@ func (ges *expenseItemServiceImpl) Update(ctx context.Context, req dto.UpdateExp
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	profileIDs := []uuid.UUID{profileID}
+	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
 	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, profileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, namesByProfileID), nil
 }
 
-func (ges *expenseItemServiceImpl) Remove(ctx context.Context, groupExpenseID, expenseItemID uuid.UUID) error {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return err
-	}
-
+func (ges *expenseItemServiceImpl) Remove(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) error {
 	request := expenseitem.RemoveRequest{
-		ProfileID:      profileID,
+		ProfileID:      userProfileID,
 		ID:             expenseItemID,
 		GroupExpenseID: groupExpenseID,
 	}

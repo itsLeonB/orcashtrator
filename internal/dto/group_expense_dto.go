@@ -8,12 +8,13 @@ import (
 )
 
 type NewGroupExpenseRequest struct {
-	PayerProfileID uuid.UUID               `json:"payerProfileId"`
-	TotalAmount    decimal.Decimal         `json:"totalAmount" binding:"required"`
-	Subtotal       decimal.Decimal         `json:"subtotal" binding:"required"`
-	Description    string                  `json:"description"`
-	Items          []NewExpenseItemRequest `json:"items" binding:"required,min=1,dive"`
-	OtherFees      []NewOtherFeeRequest    `json:"otherFees" binding:"dive"`
+	CreatorProfileID uuid.UUID               `json:"-"`
+	PayerProfileID   uuid.UUID               `json:"payerProfileId"`
+	TotalAmount      decimal.Decimal         `json:"totalAmount" binding:"required"`
+	Subtotal         decimal.Decimal         `json:"subtotal" binding:"required"`
+	Description      string                  `json:"description"`
+	Items            []NewExpenseItemRequest `json:"items" binding:"required,min=1,dive"`
+	OtherFees        []NewOtherFeeRequest    `json:"otherFees" binding:"dive"`
 }
 
 type GroupExpenseResponse struct {

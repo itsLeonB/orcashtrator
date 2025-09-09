@@ -9,7 +9,6 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/otherfee"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/mapper"
-	"github.com/itsLeonB/orcashtrator/internal/util"
 	"github.com/itsLeonB/ungerr"
 )
 
@@ -29,17 +28,12 @@ func NewOtherFeeService(
 }
 
 func (ofs *otherFeeServiceImpl) Add(ctx context.Context, req dto.NewOtherFeeRequest) (dto.OtherFeeResponse, error) {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.OtherFeeResponse{}, err
-	}
-
 	if !req.Amount.IsPositive() {
 		return dto.OtherFeeResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNonPositiveAmount)
 	}
 
 	request := otherfee.AddRequest{
-		ProfileID:      profileID,
+		ProfileID:      req.UserProfileID,
 		GroupExpenseID: req.GroupExpenseID,
 		OtherFeeData: otherfee.OtherFeeData{
 			Name:              req.Name,
@@ -53,28 +47,23 @@ func (ofs *otherFeeServiceImpl) Add(ctx context.Context, req dto.NewOtherFeeRequ
 		return dto.OtherFeeResponse{}, err
 	}
 
-	profileIDs := []uuid.UUID{profileID}
+	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, otherFee.ProfileIDs()...)
 	namesByProfileID, err := ofs.profileService.GetNames(ctx, profileIDs)
 	if err != nil {
 		return dto.OtherFeeResponse{}, err
 	}
 
-	return mapper.OtherFeeToResponse(otherFee, profileID, namesByProfileID), nil
+	return mapper.OtherFeeToResponse(otherFee, req.UserProfileID, namesByProfileID), nil
 }
 
 func (ofs *otherFeeServiceImpl) Update(ctx context.Context, req dto.UpdateOtherFeeRequest) (dto.OtherFeeResponse, error) {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.OtherFeeResponse{}, err
-	}
-
 	if !req.Amount.IsPositive() {
 		return dto.OtherFeeResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNonPositiveAmount)
 	}
 
 	request := otherfee.UpdateRequest{
-		ProfileID:      profileID,
+		ProfileID:      req.UserProfileID,
 		ID:             req.ID,
 		GroupExpenseID: req.GroupExpenseID,
 		OtherFeeData: otherfee.OtherFeeData{
@@ -89,24 +78,19 @@ func (ofs *otherFeeServiceImpl) Update(ctx context.Context, req dto.UpdateOtherF
 		return dto.OtherFeeResponse{}, err
 	}
 
-	profileIDs := []uuid.UUID{profileID}
+	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, otherFee.ProfileIDs()...)
 	namesByProfileID, err := ofs.profileService.GetNames(ctx, profileIDs)
 	if err != nil {
 		return dto.OtherFeeResponse{}, err
 	}
 
-	return mapper.OtherFeeToResponse(otherFee, profileID, namesByProfileID), nil
+	return mapper.OtherFeeToResponse(otherFee, req.UserProfileID, namesByProfileID), nil
 }
 
-func (ofs *otherFeeServiceImpl) Remove(ctx context.Context, groupExpenseID, otherFeeID uuid.UUID) error {
-	profileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return err
-	}
-
+func (ofs *otherFeeServiceImpl) Remove(ctx context.Context, groupExpenseID, otherFeeID, userProfileID uuid.UUID) error {
 	request := otherfee.RemoveRequest{
-		ProfileID:      profileID,
+		ProfileID:      userProfileID,
 		ID:             otherFeeID,
 		GroupExpenseID: groupExpenseID,
 	}

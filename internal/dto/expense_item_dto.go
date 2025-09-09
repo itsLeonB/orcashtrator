@@ -27,6 +27,7 @@ type ExpenseItemResponse struct {
 }
 
 type UpdateExpenseItemRequest struct {
+	UserProfileID  uuid.UUID                `json:"-"`
 	ID             uuid.UUID                `json:"-"`
 	GroupExpenseID uuid.UUID                `json:"-"`
 	Name           string                   `json:"name" binding:"required,min=3"`
@@ -41,6 +42,7 @@ type ItemParticipantRequest struct {
 }
 
 type NewExpenseItemRequest struct {
+	UserProfileID  uuid.UUID       `json:"-"`
 	GroupExpenseID uuid.UUID       `json:"-"`
 	Name           string          `json:"name" binding:"required,min=3"`
 	Amount         decimal.Decimal `json:"amount" binding:"required"`

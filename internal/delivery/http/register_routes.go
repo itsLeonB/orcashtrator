@@ -12,7 +12,7 @@ import (
 )
 
 func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Logger, services *provider.Services) {
-	handlers := handler.ProvideHandlers(services)
+	handlers := handler.ProvideHandlers(logger, services)
 	middlewares := provideMiddlewares(configs.App, logger, services.Auth)
 
 	router.Use(middlewares.logger, middlewares.cors)

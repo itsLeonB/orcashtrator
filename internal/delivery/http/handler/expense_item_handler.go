@@ -10,6 +10,7 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/service"
+	"github.com/itsLeonB/orcashtrator/internal/util"
 )
 
 type ExpenseItemHandler struct {
@@ -26,6 +27,12 @@ func NewExpenseItemHandler(
 
 func (geh *ExpenseItemHandler) HandleAdd() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -38,6 +45,7 @@ func (geh *ExpenseItemHandler) HandleAdd() gin.HandlerFunc {
 			return
 		}
 
+		request.UserProfileID = userProfileID
 		request.GroupExpenseID = groupExpenseID
 
 		response, err := geh.expenseItemSvc.Add(ctx, request)
@@ -55,6 +63,12 @@ func (geh *ExpenseItemHandler) HandleAdd() gin.HandlerFunc {
 
 func (geh *ExpenseItemHandler) HandleGetDetails() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -67,7 +81,7 @@ func (geh *ExpenseItemHandler) HandleGetDetails() gin.HandlerFunc {
 			return
 		}
 
-		response, err := geh.expenseItemSvc.GetDetails(ctx, groupExpenseID, expenseItemID)
+		response, err := geh.expenseItemSvc.GetDetails(ctx, groupExpenseID, expenseItemID, userProfileID)
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -82,6 +96,12 @@ func (geh *ExpenseItemHandler) HandleGetDetails() gin.HandlerFunc {
 
 func (geh *ExpenseItemHandler) HandleUpdate() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -100,6 +120,7 @@ func (geh *ExpenseItemHandler) HandleUpdate() gin.HandlerFunc {
 			return
 		}
 
+		request.UserProfileID = userProfileID
 		request.GroupExpenseID = groupExpenseID
 		request.ID = expenseItemID
 
@@ -118,6 +139,12 @@ func (geh *ExpenseItemHandler) HandleUpdate() gin.HandlerFunc {
 
 func (geh *ExpenseItemHandler) HandleRemove() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
 		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
 		if err != nil {
 			_ = ctx.Error(err)
@@ -130,7 +157,7 @@ func (geh *ExpenseItemHandler) HandleRemove() gin.HandlerFunc {
 			return
 		}
 
-		if err = geh.expenseItemSvc.Remove(ctx, groupExpenseID, expenseItemID); err != nil {
+		if err = geh.expenseItemSvc.Remove(ctx, groupExpenseID, expenseItemID, userProfileID); err != nil {
 			_ = ctx.Error(err)
 			return
 		}

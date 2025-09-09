@@ -43,22 +43,22 @@ type TransferMethodService interface {
 
 type GroupExpenseService interface {
 	CreateDraft(ctx context.Context, request dto.NewGroupExpenseRequest) (dto.GroupExpenseResponse, error)
-	GetAllCreated(ctx context.Context) ([]dto.GroupExpenseResponse, error)
-	GetDetails(ctx context.Context, id uuid.UUID) (dto.GroupExpenseResponse, error)
-	ConfirmDraft(ctx context.Context, id uuid.UUID) (dto.GroupExpenseResponse, error)
+	GetAllCreated(ctx context.Context, userProfileID uuid.UUID) ([]dto.GroupExpenseResponse, error)
+	GetDetails(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
+	ConfirmDraft(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
 }
 
 type ExpenseItemService interface {
 	Add(ctx context.Context, request dto.NewExpenseItemRequest) (dto.ExpenseItemResponse, error)
-	GetDetails(ctx context.Context, groupExpenseID, expenseItemID uuid.UUID) (dto.ExpenseItemResponse, error)
+	GetDetails(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) (dto.ExpenseItemResponse, error)
 	Update(ctx context.Context, request dto.UpdateExpenseItemRequest) (dto.ExpenseItemResponse, error)
-	Remove(ctx context.Context, groupExpenseID, expenseItemID uuid.UUID) error
+	Remove(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) error
 }
 
 type OtherFeeService interface {
 	Add(ctx context.Context, request dto.NewOtherFeeRequest) (dto.OtherFeeResponse, error)
 	Update(ctx context.Context, request dto.UpdateOtherFeeRequest) (dto.OtherFeeResponse, error)
-	Remove(ctx context.Context, groupExpenseID, otherFeeID uuid.UUID) error
+	Remove(ctx context.Context, groupExpenseID, otherFeeID, userProfileID uuid.UUID) error
 	GetCalculationMethods(ctx context.Context) ([]dto.FeeCalculationMethodInfo, error)
 }
 

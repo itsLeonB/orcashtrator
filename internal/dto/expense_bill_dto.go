@@ -7,11 +7,12 @@ import (
 )
 
 type NewExpenseBillRequest struct {
-	PayerProfileID uuid.UUID
-	ImageReader    io.ReadCloser
-	ContentType    string
-	Filename       string
-	FileSize       int64
+	CreatorProfileID uuid.UUID
+	PayerProfileID   uuid.UUID
+	ImageReader      io.ReadCloser
+	ContentType      string
+	Filename         string
+	FileSize         int64
 }
 
 type UploadBillResponse struct {

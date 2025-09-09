@@ -9,7 +9,6 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/groupexpense"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/mapper"
-	"github.com/itsLeonB/orcashtrator/internal/util"
 	"github.com/itsLeonB/ungerr"
 	"github.com/shopspring/decimal"
 )
@@ -36,11 +35,6 @@ func NewGroupExpenseService(
 }
 
 func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto.NewGroupExpenseRequest) (dto.GroupExpenseResponse, error) {
-	userProfileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.GroupExpenseResponse{}, err
-	}
-
 	if err := ges.validateRequest(ctx, request); err != nil {
 		return dto.GroupExpenseResponse{}, err
 	}
@@ -48,10 +42,10 @@ func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto
 	// Default PayerProfileID to the user's profile ID if not provided
 	// This is useful when the user is creating a group expense for themselves.
 	if request.PayerProfileID == uuid.Nil {
-		request.PayerProfileID = userProfileID
+		request.PayerProfileID = request.CreatorProfileID
 	} else {
 		// Check if the payer is a friend of the user
-		isFriend, _, err := ges.friendshipService.IsFriends(ctx, userProfileID, request.PayerProfileID)
+		isFriend, _, err := ges.friendshipService.IsFriends(ctx, request.CreatorProfileID, request.PayerProfileID)
 		if err != nil {
 			return dto.GroupExpenseResponse{}, err
 		}
@@ -61,7 +55,7 @@ func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto
 	}
 
 	groupExpense := mapper.GroupExpenseRequestToEntity(request)
-	groupExpense.CreatorProfileID = userProfileID
+	groupExpense.CreatorProfileID = request.CreatorProfileID
 
 	insertedGroupExpense, err := ges.groupExpenseClient.CreateDraft(ctx, groupExpense)
 	if err != nil {
@@ -73,15 +67,10 @@ func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto
 		return dto.GroupExpenseResponse{}, err
 	}
 
-	return mapper.GroupExpenseToResponse(insertedGroupExpense, userProfileID, namesByProfileIDs), nil
+	return mapper.GroupExpenseToResponse(insertedGroupExpense, request.CreatorProfileID, namesByProfileIDs), nil
 }
 
-func (ges *groupExpenseServiceImpl) GetAllCreated(ctx context.Context) ([]dto.GroupExpenseResponse, error) {
-	userProfileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return nil, err
-	}
-
+func (ges *groupExpenseServiceImpl) GetAllCreated(ctx context.Context, userProfileID uuid.UUID) ([]dto.GroupExpenseResponse, error) {
 	groupExpenses, err := ges.groupExpenseClient.GetAllCreated(ctx, userProfileID)
 	if err != nil {
 		return nil, err
@@ -107,12 +96,7 @@ func (ges *groupExpenseServiceImpl) GetAllCreated(ctx context.Context) ([]dto.Gr
 	return ezutil.MapSlice(groupExpenses, mapFunc), nil
 }
 
-func (ges *groupExpenseServiceImpl) GetDetails(ctx context.Context, id uuid.UUID) (dto.GroupExpenseResponse, error) {
-	userProfileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.GroupExpenseResponse{}, err
-	}
-
+func (ges *groupExpenseServiceImpl) GetDetails(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error) {
 	groupExpense, err := ges.groupExpenseClient.GetDetails(ctx, id)
 	if err != nil {
 		return dto.GroupExpenseResponse{}, err
@@ -126,12 +110,7 @@ func (ges *groupExpenseServiceImpl) GetDetails(ctx context.Context, id uuid.UUID
 	return mapper.GroupExpenseToResponse(groupExpense, userProfileID, namesByProfileIDs), nil
 }
 
-func (ges *groupExpenseServiceImpl) ConfirmDraft(ctx context.Context, id uuid.UUID) (dto.GroupExpenseResponse, error) {
-	userProfileID, err := util.GetProfileID(ctx)
-	if err != nil {
-		return dto.GroupExpenseResponse{}, err
-	}
-
+func (ges *groupExpenseServiceImpl) ConfirmDraft(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error) {
 	request := groupexpense.ConfirmDraftRequest{
 		ID:        id,
 		ProfileID: userProfileID,

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/provider"
 )
 
@@ -16,7 +17,7 @@ type Handlers struct {
 	ExpenseBill    *ExpenseBillHandler
 }
 
-func ProvideHandlers(services *provider.Services) *Handlers {
+func ProvideHandlers(logger ezutil.Logger, services *provider.Services) *Handlers {
 	return &Handlers{
 		NewAuthHandler(services.Auth),
 		NewFriendshipHandler(services.Friendship, services.FriendDetails),
@@ -26,6 +27,6 @@ func ProvideHandlers(services *provider.Services) *Handlers {
 		NewGroupExpenseHandler(services.GroupExpense),
 		NewExpenseItemHandler(services.ExpenseItem),
 		NewOtherFeeHandler(services.OtherFee),
-		NewExpenseBillHandler(services.ExpenseBill),
+		NewExpenseBillHandler(logger, services.ExpenseBill),
 	}
 }
