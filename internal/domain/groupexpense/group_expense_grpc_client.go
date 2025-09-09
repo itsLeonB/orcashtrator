@@ -30,6 +30,10 @@ func NewGroupExpenseClient(
 	validate *validator.Validate,
 	conn *grpc.ClientConn,
 ) GroupExpenseClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &groupExpenseClient{
 		validate,
 		groupexpense.NewGroupExpenseServiceClient(conn),

@@ -24,6 +24,10 @@ type authClient struct {
 }
 
 func NewAuthClient(validate *validator.Validate, conn *grpc.ClientConn) AuthClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &authClient{
 		validate: validate,
 		client:   auth.NewAuthServiceClient(conn),

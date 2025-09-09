@@ -25,6 +25,10 @@ func NewOtherFeeClient(
 	validate *validator.Validate,
 	conn *grpc.ClientConn,
 ) OtherFeeClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &otherFeeClient{
 		validate,
 		otherfee.NewOtherFeeServiceClient(conn),

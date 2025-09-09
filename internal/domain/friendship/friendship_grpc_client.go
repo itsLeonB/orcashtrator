@@ -24,6 +24,10 @@ type friendshipClient struct {
 }
 
 func NewFriendshipClient(validate *validator.Validate, conn *grpc.ClientConn) FriendshipClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &friendshipClient{
 		validate,
 		friendship.NewFriendshipServiceClient(conn),

@@ -25,6 +25,10 @@ type debtClient struct {
 }
 
 func NewDebtClient(validate *validator.Validate, conn *grpc.ClientConn) DebtClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &debtClient{
 		validate,
 		debt.NewDebtServiceClient(conn),

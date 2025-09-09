@@ -26,6 +26,10 @@ func NewExpenseBillClient(
 	validate *validator.Validate,
 	conn *grpc.ClientConn,
 ) ExpenseBillClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &expenseBillClient{
 		validate,
 		expensebill.NewExpenseBillServiceClient(conn),

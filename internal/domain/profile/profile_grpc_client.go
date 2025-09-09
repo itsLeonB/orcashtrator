@@ -27,6 +27,10 @@ func NewProfileClient(
 	validate *validator.Validate,
 	conn *grpc.ClientConn,
 ) ProfileClient {
+	if validate == nil {
+		panic("validator is nil")
+	}
+
 	return &profileClient{
 		validate,
 		profile.NewProfileServiceClient(conn),
