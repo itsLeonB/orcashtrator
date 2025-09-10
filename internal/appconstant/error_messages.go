@@ -26,4 +26,6 @@ const (
 	ErrNonPositiveAmount = "amount must be positive (>0)"
 
 	ErrServiceClient = "service client communication failure"
+
+	ErrStructValidation = "error validating struct input"
 )

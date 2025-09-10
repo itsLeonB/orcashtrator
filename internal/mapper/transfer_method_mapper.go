@@ -9,7 +9,7 @@ func TransferMethodToResponse(tm debt.TransferMethod) dto.TransferMethodResponse
 	return dto.TransferMethodResponse{
 		ID:        tm.ID,
 		Name:      tm.Name,
-		Display:   tm.Name,
+		Display:   tm.Display,
 		CreatedAt: tm.CreatedAt,
 		UpdatedAt: tm.UpdatedAt,
 		DeletedAt: tm.DeletedAt,

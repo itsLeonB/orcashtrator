@@ -106,5 +106,5 @@ func (ofc *otherFeeClient) GetCalculationMethods(ctx context.Context) ([]Calcula
 		return nil, err
 	}
 
-	return ezutil.MapSlice(response.GetMethods(), fromCalculationMethodInfoProto), nil
+	return ezutil.MapSliceWithError(response.GetMethods(), fromCalculationMethodInfoProto)
 }

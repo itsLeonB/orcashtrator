@@ -35,7 +35,7 @@ func NewGroupExpenseService(
 }
 
 func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto.NewGroupExpenseRequest) (dto.GroupExpenseResponse, error) {
-	if err := ges.validateRequest(ctx, request); err != nil {
+	if err := ges.validateRequest(request); err != nil {
 		return dto.GroupExpenseResponse{}, err
 	}
 
@@ -43,7 +43,7 @@ func (ges *groupExpenseServiceImpl) CreateDraft(ctx context.Context, request dto
 	// This is useful when the user is creating a group expense for themselves.
 	if request.PayerProfileID == uuid.Nil {
 		request.PayerProfileID = request.CreatorProfileID
-	} else {
+	} else if request.PayerProfileID != request.CreatorProfileID {
 		// Check if the payer is a friend of the user
 		isFriend, _, err := ges.friendshipService.IsFriends(ctx, request.CreatorProfileID, request.PayerProfileID)
 		if err != nil {
@@ -133,8 +133,8 @@ func (ges *groupExpenseServiceImpl) ConfirmDraft(ctx context.Context, id, userPr
 	return mapper.GroupExpenseToResponse(groupExpense, userProfileID, namesByProfileIDs), nil
 }
 
-func (ges *groupExpenseServiceImpl) validateRequest(ctx context.Context, request dto.NewGroupExpenseRequest) error {
-	if request.TotalAmount.IsZero() {
+func (ges *groupExpenseServiceImpl) validateRequest(request dto.NewGroupExpenseRequest) error {
+	if request.TotalAmount.LessThanOrEqual(decimal.Zero) {
 		return ungerr.UnprocessableEntityError(appconstant.ErrAmountZero)
 	}
 

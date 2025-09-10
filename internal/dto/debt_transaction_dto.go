@@ -9,7 +9,7 @@ import (
 )
 
 type NewDebtTransactionRequest struct {
-	UserProfileID    uuid.UUID
+	UserProfileID    uuid.UUID          `json:"-"`
 	FriendProfileID  uuid.UUID          `json:"friendProfileId" binding:"required"`
 	Action           appconstant.Action `json:"action" binding:"oneof=LEND BORROW RECEIVE RETURN"`
 	Amount           decimal.Decimal    `json:"amount" binding:"required"`

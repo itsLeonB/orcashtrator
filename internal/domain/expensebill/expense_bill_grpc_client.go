@@ -38,56 +38,61 @@ func NewExpenseBillClient(
 
 func (ebc *expenseBillClient) UploadStream(ctx context.Context, req UploadStreamRequest) (uuid.UUID, error) {
 	if err := ebc.validate.Struct(req); err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, eris.Wrap(err, appconstant.ErrStructValidation)
 	}
 
 	stream, err := ebc.client.UploadStream(ctx)
 	if err != nil {
+		return uuid.Nil, eris.Wrap(err, "error opening grpc client stream")
+	}
+
+	if err = stream.Send(toBillMetadataProto(req)); err != nil {
+		return uuid.Nil, eris.Wrap(err, "error sending metadata to grpc stream")
+	}
+
+	if err = ebc.sendDataChunks(stream, req.FileStream, req.FileSize); err != nil {
 		return uuid.Nil, err
-	}
-
-	metadata := &expensebill.UploadStreamRequest{
-		Data: &expensebill.UploadStreamRequest_BillMetadata{
-			BillMetadata: &expensebill.BillMetadata{
-				CreatorProfileId: req.CreatorProfileID.String(),
-				PayerProfileId:   req.PayerProfileID.String(),
-				ContentType:      req.ContentType,
-				Filename:         req.Filename,
-				FileSize:         req.FileSize,
-			},
-		},
-	}
-
-	if err = stream.Send(metadata); err != nil {
-		return uuid.Nil, err
-	}
-
-	buffer := make([]byte, appconstant.ChunkSize)
-
-	for {
-		n, err := req.FileStream.Read(buffer)
-		if err == io.EOF {
-			break
-		}
-		if err != nil {
-			return uuid.Nil, eris.Wrap(err, "failed to read from stream")
-		}
-
-		chunk := &expensebill.UploadStreamRequest{
-			Data: &expensebill.UploadStreamRequest_Chunk{
-				Chunk: buffer[:n],
-			},
-		}
-
-		if err = stream.Send(chunk); err != nil {
-			return uuid.Nil, err
-		}
 	}
 
 	response, err := stream.CloseAndRecv()
 	if err != nil {
-		return uuid.Nil, err
+		return uuid.Nil, eris.Wrap(err, "error closing grpc stream")
 	}
 
 	return ezutil.Parse[uuid.UUID](response.GetId())
+}
+
+func (ebc *expenseBillClient) sendDataChunks(
+	stream grpc.ClientStreamingClient[expensebill.UploadStreamRequest, expensebill.UploadStreamResponse],
+	fileStream io.ReadCloser,
+	fileSize int64,
+) error {
+	buffer := make([]byte, appconstant.ChunkSize)
+
+	var sent int64
+
+	for {
+		n, err := fileStream.Read(buffer)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return eris.Wrap(err, "failed to read from stream")
+		}
+
+		if n > 0 {
+			chunk := &expensebill.UploadStreamRequest{
+				Data: &expensebill.UploadStreamRequest_Chunk{
+					Chunk: buffer[:n],
+				},
+			}
+			if err = stream.Send(chunk); err != nil {
+				return eris.Wrap(err, "send chunk")
+			}
+			sent += int64(n)
+			if sent > fileSize {
+				return eris.Errorf("read more bytes than declared: sent=%d declared=%d", sent, fileSize)
+			}
+		}
+	}
 }
