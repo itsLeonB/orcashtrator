@@ -83,7 +83,7 @@ func (geh *GroupExpenseHandler) HandleGetDetails() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -110,7 +110,7 @@ func (geh *GroupExpenseHandler) HandleConfirmDraft() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return

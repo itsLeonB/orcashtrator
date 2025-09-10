@@ -1,10 +1,16 @@
 package appconstant
 
+type ctxKey string
+
 const (
-	ContextUserID         = "userID"
-	ContextProfileID      = "profileID"
-	ContextFriendshipID   = "friendshipID"
-	ContextGroupExpenseID = "groupExpenseID"
-	ContextExpenseItemID  = "expenseItemID"
-	ContextOtherFeeID     = "otherFeeID"
+	ContextUserID         ctxKey = "userID"
+	ContextProfileID      ctxKey = "profileID"
+	ContextFriendshipID   ctxKey = "friendshipID"
+	ContextGroupExpenseID ctxKey = "groupExpenseID"
+	ContextExpenseItemID  ctxKey = "expenseItemID"
+	ContextOtherFeeID     ctxKey = "otherFeeID"
 )
+
+func (c ctxKey) String() string {
+	return string(c)
+}

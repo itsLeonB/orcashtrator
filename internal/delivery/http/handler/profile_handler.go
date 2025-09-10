@@ -24,7 +24,7 @@ func NewProfileHandler(
 
 func (ph *ProfileHandler) HandleProfile() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
-		profileID, err := ginkgo.GetAndParseFromContext[uuid.UUID](ctx, appconstant.ContextProfileID)
+		profileID, err := ginkgo.GetAndParseFromContext[uuid.UUID](ctx, appconstant.ContextProfileID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return

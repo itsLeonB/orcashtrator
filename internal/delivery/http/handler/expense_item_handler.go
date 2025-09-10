@@ -33,7 +33,7 @@ func (geh *ExpenseItemHandler) HandleAdd() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -69,13 +69,13 @@ func (geh *ExpenseItemHandler) HandleGetDetails() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
 		}
 
-		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID)
+		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -102,13 +102,13 @@ func (geh *ExpenseItemHandler) HandleUpdate() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
 		}
 
-		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID)
+		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -145,13 +145,13 @@ func (geh *ExpenseItemHandler) HandleRemove() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
 		}
 
-		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID)
+		expenseItemID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseItemID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return

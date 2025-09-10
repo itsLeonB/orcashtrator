@@ -33,7 +33,7 @@ func (geh *OtherFeeHandler) HandleAdd() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -69,13 +69,13 @@ func (geh *OtherFeeHandler) HandleUpdate() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
 		}
 
-		otherFeeID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextOtherFeeID)
+		otherFeeID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextOtherFeeID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -112,13 +112,13 @@ func (geh *OtherFeeHandler) HandleRemove() gin.HandlerFunc {
 			return
 		}
 
-		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID)
+		groupExpenseID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextGroupExpenseID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
 		}
 
-		feeID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextOtherFeeID)
+		feeID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextOtherFeeID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return

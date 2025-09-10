@@ -89,6 +89,6 @@ func (ac *authClient) VerifyToken(ctx context.Context, token string) (bool, map[
 	}
 
 	return true, map[string]any{
-		appconstant.ContextProfileID: data.GetProfileId(),
+		appconstant.ContextProfileID.String(): data.GetProfileId(),
 	}, nil
 }

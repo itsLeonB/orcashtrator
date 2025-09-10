@@ -86,7 +86,7 @@ func (fh *FriendshipHandler) HandleGetDetails() gin.HandlerFunc {
 			return
 		}
 
-		friendshipID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextFriendshipID)
+		friendshipID, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextFriendshipID.String())
 		if err != nil {
 			_ = ctx.Error(err)
 			return
