@@ -1,0 +1,67 @@
+package service
+
+import (
+	"context"
+
+	"github.com/google/uuid"
+	"github.com/itsLeonB/orcashtrator/internal/domain/groupexpense"
+	"github.com/itsLeonB/orcashtrator/internal/dto"
+)
+
+type AuthService interface {
+	Register(ctx context.Context, request dto.RegisterRequest) error
+	Login(ctx context.Context, request dto.LoginRequest) (dto.LoginResponse, error)
+	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
+}
+
+type ProfileService interface {
+	GetByID(ctx context.Context, id uuid.UUID) (dto.ProfileResponse, error)
+	GetNames(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]string, error)
+	GetByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]dto.ProfileResponse, error)
+}
+
+type FriendshipService interface {
+	CreateAnonymous(ctx context.Context, request dto.NewAnonymousFriendshipRequest) (dto.FriendshipResponse, error)
+	GetAll(ctx context.Context, profileID uuid.UUID) ([]dto.FriendshipResponse, error)
+	IsFriends(ctx context.Context, profileID1, profileID2 uuid.UUID) (bool, bool, error)
+}
+
+type FriendDetailsService interface {
+	GetDetails(ctx context.Context, profileID, friendshipID uuid.UUID) (dto.FriendDetailsResponse, error)
+}
+
+type DebtService interface {
+	RecordNewTransaction(ctx context.Context, request dto.NewDebtTransactionRequest) (dto.DebtTransactionResponse, error)
+	GetTransactions(ctx context.Context, userProfileID uuid.UUID) ([]dto.DebtTransactionResponse, error)
+	ProcessConfirmedGroupExpense(ctx context.Context, groupExpense groupexpense.GroupExpense) error
+	GetAllByProfileIDs(ctx context.Context, userProfileID, friendProfileID uuid.UUID) ([]dto.DebtTransactionResponse, error)
+}
+
+type TransferMethodService interface {
+	GetAll(ctx context.Context) ([]dto.TransferMethodResponse, error)
+}
+
+type GroupExpenseService interface {
+	CreateDraft(ctx context.Context, request dto.NewGroupExpenseRequest) (dto.GroupExpenseResponse, error)
+	GetAllCreated(ctx context.Context, userProfileID uuid.UUID) ([]dto.GroupExpenseResponse, error)
+	GetDetails(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
+	ConfirmDraft(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
+}
+
+type ExpenseItemService interface {
+	Add(ctx context.Context, request dto.NewExpenseItemRequest) (dto.ExpenseItemResponse, error)
+	GetDetails(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) (dto.ExpenseItemResponse, error)
+	Update(ctx context.Context, request dto.UpdateExpenseItemRequest) (dto.ExpenseItemResponse, error)
+	Remove(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) error
+}
+
+type OtherFeeService interface {
+	Add(ctx context.Context, request dto.NewOtherFeeRequest) (dto.OtherFeeResponse, error)
+	Update(ctx context.Context, request dto.UpdateOtherFeeRequest) (dto.OtherFeeResponse, error)
+	Remove(ctx context.Context, groupExpenseID, otherFeeID, userProfileID uuid.UUID) error
+	GetCalculationMethods(ctx context.Context) ([]dto.FeeCalculationMethodInfo, error)
+}
+
+type ExpenseBillService interface {
+	Upload(ctx context.Context, request dto.NewExpenseBillRequest) (dto.UploadBillResponse, error)
+}
