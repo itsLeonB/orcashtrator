@@ -10,7 +10,7 @@ import (
 )
 
 func GetProfileID(ctx context.Context) (uuid.UUID, error) {
-	ctxProfileID := ctx.Value(appconstant.ContextProfileID)
+	ctxProfileID := ctx.Value(appconstant.ContextProfileID.String())
 	if ctxProfileID == nil {
 		return uuid.Nil, eris.New("profileID not found in ctx")
 	}
