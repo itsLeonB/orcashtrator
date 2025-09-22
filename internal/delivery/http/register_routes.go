@@ -57,5 +57,10 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 	otherFeeRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextOtherFeeID), handlers.OtherFee.HandleRemove())
 
 	groupExpenseRoutes.GET("/fee-calculation-methods", handlers.OtherFee.HandleGetFeeCalculationMethods())
-	groupExpenseRoutes.POST("/bills", handlers.ExpenseBill.HandleUploadBill())
+
+	expenseBillRoutes := groupExpenseRoutes.Group("/bills")
+	expenseBillRoutes.POST("", handlers.ExpenseBill.HandleSave())
+	expenseBillRoutes.GET("", handlers.ExpenseBill.HandleGetAllCreated())
+	expenseBillRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextExpenseBillID.String()), handlers.ExpenseBill.HandleGet())
+	expenseBillRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextExpenseBillID.String()), handlers.ExpenseBill.HandleDelete())
 }

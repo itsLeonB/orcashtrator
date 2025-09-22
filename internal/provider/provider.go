@@ -21,7 +21,7 @@ func All(configs config.Config) *Provider {
 	return &Provider{
 		Logger:   logger,
 		Clients:  clients,
-		Services: ProvideServices(clients),
+		Services: ProvideServices(clients, logger),
 	}
 }
 

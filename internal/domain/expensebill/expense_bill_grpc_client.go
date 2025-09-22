@@ -2,7 +2,6 @@ package expensebill
 
 import (
 	"context"
-	"io"
 
 	"github.com/go-playground/validator/v10"
 	"github.com/google/uuid"
@@ -14,7 +13,10 @@ import (
 )
 
 type ExpenseBillClient interface {
-	UploadStream(ctx context.Context, req UploadStreamRequest) (uuid.UUID, error)
+	Save(ctx context.Context, req ExpenseBill) (ExpenseBill, error)
+	GetAllCreated(ctx context.Context, creatorProfileID uuid.UUID) ([]ExpenseBill, error)
+	Get(ctx context.Context, id uuid.UUID) (ExpenseBill, error)
+	Delete(ctx context.Context, profileID, id uuid.UUID) error
 }
 
 type expenseBillClient struct {
@@ -36,63 +38,56 @@ func NewExpenseBillClient(
 	}
 }
 
-func (ebc *expenseBillClient) UploadStream(ctx context.Context, req UploadStreamRequest) (uuid.UUID, error) {
+func (ebc *expenseBillClient) Save(ctx context.Context, req ExpenseBill) (ExpenseBill, error) {
 	if err := ebc.validate.Struct(req); err != nil {
-		return uuid.Nil, eris.Wrap(err, appconstant.ErrStructValidation)
+		return ExpenseBill{}, eris.Wrap(err, appconstant.ErrStructValidation)
 	}
 
-	stream, err := ebc.client.UploadStream(ctx)
+	request := expensebill.SaveRequest{
+		ExpenseBill: toExpenseBillProto(req),
+	}
+
+	response, err := ebc.client.Save(ctx, &request)
 	if err != nil {
-		return uuid.Nil, eris.Wrap(err, "error opening grpc client stream")
+		return ExpenseBill{}, err
 	}
 
-	if err = stream.Send(toBillMetadataProto(req)); err != nil {
-		return uuid.Nil, eris.Wrap(err, "error sending metadata to grpc stream")
-	}
-
-	if err = ebc.sendDataChunks(stream, req.FileStream, req.FileSize); err != nil {
-		return uuid.Nil, err
-	}
-
-	response, err := stream.CloseAndRecv()
-	if err != nil {
-		return uuid.Nil, eris.Wrap(err, "error closing grpc stream")
-	}
-
-	return ezutil.Parse[uuid.UUID](response.GetId())
+	return fromExpenseBillProto(response.GetExpenseBill())
 }
 
-func (ebc *expenseBillClient) sendDataChunks(
-	stream grpc.ClientStreamingClient[expensebill.UploadStreamRequest, expensebill.UploadStreamResponse],
-	fileStream io.ReadCloser,
-	fileSize int64,
-) error {
-	buffer := make([]byte, appconstant.ChunkSize)
-
-	var sent int64
-
-	for {
-		n, err := fileStream.Read(buffer)
-		if err == io.EOF {
-			return nil
-		}
-		if err != nil {
-			return eris.Wrap(err, "failed to read from stream")
-		}
-
-		if n > 0 {
-			chunk := &expensebill.UploadStreamRequest{
-				Data: &expensebill.UploadStreamRequest_Chunk{
-					Chunk: buffer[:n],
-				},
-			}
-			if err = stream.Send(chunk); err != nil {
-				return eris.Wrap(err, "send chunk")
-			}
-			sent += int64(n)
-			if sent > fileSize {
-				return eris.Errorf("read more bytes than declared: sent=%d declared=%d", sent, fileSize)
-			}
-		}
+func (ebc *expenseBillClient) GetAllCreated(ctx context.Context, creatorProfileID uuid.UUID) ([]ExpenseBill, error) {
+	request := expensebill.GetAllCreatedRequest{
+		CreatorProfileId: creatorProfileID.String(),
 	}
+
+	response, err := ebc.client.GetAllCreated(ctx, &request)
+	if err != nil {
+		return nil, err
+	}
+
+	return ezutil.MapSliceWithError(response.GetExpenseBills(), fromExpenseBillProto)
+}
+
+func (ebc *expenseBillClient) Get(ctx context.Context, id uuid.UUID) (ExpenseBill, error) {
+	request := expensebill.GetRequest{
+		Id: id.String(),
+	}
+
+	response, err := ebc.client.Get(ctx, &request)
+	if err != nil {
+		return ExpenseBill{}, err
+	}
+
+	return fromExpenseBillProto(response.GetExpenseBill())
+}
+
+func (ebc *expenseBillClient) Delete(ctx context.Context, profileID, id uuid.UUID) error {
+	request := expensebill.DeleteRequest{
+		ProfileId: profileID.String(),
+		Id:        id.String(),
+	}
+
+	_, err := ebc.client.Delete(ctx, &request)
+
+	return err
 }

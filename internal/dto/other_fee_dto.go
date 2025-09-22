@@ -16,9 +16,9 @@ type FeeParticipantResponse struct {
 }
 
 type FeeCalculationMethodInfo struct {
-	Name        string `json:"name"`
-	Display     string `json:"display"`
-	Description string `json:"description"`
+	Name        appconstant.FeeCalculationMethod `json:"name"`
+	Display     string                           `json:"display"`
+	Description string                           `json:"description"`
 }
 
 type OtherFeeResponse struct {

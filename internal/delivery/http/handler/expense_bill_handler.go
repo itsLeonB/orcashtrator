@@ -29,7 +29,7 @@ func NewExpenseBillHandler(
 	}
 }
 
-func (geh *ExpenseBillHandler) HandleUploadBill() gin.HandlerFunc {
+func (geh *ExpenseBillHandler) HandleSave() gin.HandlerFunc {
 	return func(ctx *gin.Context) {
 		userProfileID, err := util.GetProfileID(ctx)
 		if err != nil {
@@ -72,7 +72,7 @@ func (geh *ExpenseBillHandler) HandleUploadBill() gin.HandlerFunc {
 			FileSize:         fileHeader.Size,
 		}
 
-		response, err := geh.expenseBillService.Upload(ctx, request)
+		response, err := geh.expenseBillService.Save(ctx, &request)
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -82,5 +82,76 @@ func (geh *ExpenseBillHandler) HandleUploadBill() gin.HandlerFunc {
 			http.StatusCreated,
 			ginkgo.NewResponse(appconstant.MsgBillUploaded).WithData(response),
 		)
+	}
+}
+
+func (geh *ExpenseBillHandler) HandleGetAllCreated() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		response, err := geh.expenseBillService.GetAllCreated(ctx, userProfileID)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		ctx.JSON(
+			http.StatusOK,
+			ginkgo.NewResponse(appconstant.MsgGetData).WithData(response),
+		)
+	}
+}
+
+func (geh *ExpenseBillHandler) HandleGet() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		id, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseBillID.String())
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		response, err := geh.expenseBillService.Get(ctx, userProfileID, id)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		ctx.JSON(
+			http.StatusOK,
+			ginkgo.NewResponse(appconstant.MsgGetData).WithData(response),
+		)
+	}
+}
+
+func (geh *ExpenseBillHandler) HandleDelete() gin.HandlerFunc {
+	return func(ctx *gin.Context) {
+		userProfileID, err := util.GetProfileID(ctx)
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		id, err := ginkgo.GetRequiredPathParam[uuid.UUID](ctx, appconstant.ContextExpenseBillID.String())
+		if err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		if err = geh.expenseBillService.Delete(ctx, userProfileID, id); err != nil {
+			_ = ctx.Error(err)
+			return
+		}
+
+		ctx.JSON(http.StatusNoContent, nil)
 	}
 }
