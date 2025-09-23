@@ -8,12 +8,12 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/itsLeonB/audit v0.1.0
-	github.com/itsLeonB/billsplittr-protos v0.4.0-delta
+	github.com/itsLeonB/billsplittr-protos v0.4.0
 	github.com/itsLeonB/cocoon-protos v1.1.1
 	github.com/itsLeonB/drex-protos v0.1.0
 	github.com/itsLeonB/ezutil/v2 v2.1.0
 	github.com/itsLeonB/ginkgo v0.2.0
-	github.com/itsLeonB/stortr-protos v0.1.1-alpha
+	github.com/itsLeonB/stortr-protos v0.1.1
 	github.com/itsLeonB/ungerr v0.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
