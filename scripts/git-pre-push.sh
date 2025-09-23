@@ -18,4 +18,11 @@ if ! make test; then
     exit 1
 fi
 
+# Run build
+echo "\n=== Running build ==="
+if ! make build; then
+    echo "❌ Build failed! Please fix the build issues before pushing."
+    exit 1
+fi
+
 echo "\n✅ All checks passed! Pushing can continue...\n"

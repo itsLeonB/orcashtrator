@@ -10,6 +10,7 @@ TEST_DIR := ./internal/test
 	test-coverage
 	test-coverage-html
 	test-clean
+	build
 	install-pre-push-hook
 	uninstall-pre-push-hook
 
@@ -77,6 +78,11 @@ test-clean:
 	else \
 		echo "No tests found in $(TEST_DIR), skipping."; \
 	fi
+
+build:
+	@echo "Building the project..."
+	CGO_ENABLED=0 GOOS=linux go build -trimpath -buildvcs=false -ldflags='-w -s' -o bin/http cmd/http/main.go
+	@echo "Build success! Binary is located at bin/http"
 
 install-pre-push-hook:
 	@echo "Installing pre-push git hook..."
