@@ -63,6 +63,7 @@ func ProvideServices(clients *Clients, logger ezutil.Logger) *Services {
 	expenseBillService := service.NewExpenseBillService(
 		logger,
 		friendshipService,
+		profileService,
 		clients.ExpenseBill,
 		clients.UploadBill,
 	)

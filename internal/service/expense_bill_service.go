@@ -16,6 +16,7 @@ import (
 type expenseBillServiceImpl struct {
 	logger            ezutil.Logger
 	friendshipService FriendshipService
+	profileService    ProfileService
 	expenseBillClient expensebill.ExpenseBillClient
 	uploadBillClient  uploadbill.UploadBillClient
 }
@@ -23,28 +24,44 @@ type expenseBillServiceImpl struct {
 func NewExpenseBillService(
 	logger ezutil.Logger,
 	friendshipService FriendshipService,
+	profileService ProfileService,
 	expenseBillClient expensebill.ExpenseBillClient,
 	uploadBillClient uploadbill.UploadBillClient,
 ) ExpenseBillService {
 	return &expenseBillServiceImpl{
 		logger,
 		friendshipService,
+		profileService,
 		expenseBillClient,
 		uploadBillClient,
 	}
 }
 
 func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpenseBillRequest) (dto.ExpenseBillResponse, error) {
+	var err error
+	var namesByProfileIDs map[uuid.UUID]string
+
 	// Default PayerProfileID to the user's profile ID if not provided
 	// This is useful when the user is creating a group expense for themselves.
 	if req.PayerProfileID == uuid.Nil {
 		req.PayerProfileID = req.CreatorProfileID
+		creatorProfile, err := ebs.profileService.GetByID(ctx, req.CreatorProfileID)
+		if err != nil {
+			return dto.ExpenseBillResponse{}, err
+		}
+		namesByProfileIDs = map[uuid.UUID]string{
+			req.CreatorProfileID: creatorProfile.Name,
+		}
 	} else if req.PayerProfileID != req.CreatorProfileID {
 		// Check if the payer is a friend of the user
 		if isFriend, _, err := ebs.friendshipService.IsFriends(ctx, req.CreatorProfileID, req.PayerProfileID); err != nil {
 			return dto.ExpenseBillResponse{}, err
 		} else if !isFriend {
 			return dto.ExpenseBillResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNotFriends)
+		}
+		namesByProfileIDs, err = ebs.profileService.GetNames(ctx, []uuid.UUID{req.CreatorProfileID, req.PayerProfileID})
+		if err != nil {
+			return dto.ExpenseBillResponse{}, err
 		}
 	}
 
@@ -74,7 +91,7 @@ func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpense
 		return dto.ExpenseBillResponse{}, err
 	}
 
-	return mapper.ExpenseBillToResponse(savedBill, "", req.CreatorProfileID), nil
+	return mapper.ExpenseBillToResponse(savedBill, "", req.CreatorProfileID, namesByProfileIDs), nil
 }
 
 func (ebs *expenseBillServiceImpl) GetAllCreated(ctx context.Context, creatorProfileID uuid.UUID) ([]dto.ExpenseBillResponse, error) {
@@ -83,7 +100,13 @@ func (ebs *expenseBillServiceImpl) GetAllCreated(ctx context.Context, creatorPro
 		return nil, err
 	}
 
-	return ezutil.MapSlice(bills, mapper.ExpenseBillSimpleMapper("", creatorProfileID)), nil
+	profileIDs := mapper.UniqueBillProfileIDs(bills)
+	namesByProfileIDs, err := ebs.profileService.GetNames(ctx, profileIDs)
+	if err != nil {
+		return nil, err
+	}
+
+	return ezutil.MapSlice(bills, mapper.ExpenseBillSimpleMapper("", creatorProfileID, namesByProfileIDs)), nil
 }
 
 func (ebs *expenseBillServiceImpl) Get(ctx context.Context, profileID, id uuid.UUID) (dto.ExpenseBillResponse, error) {
@@ -97,7 +120,12 @@ func (ebs *expenseBillServiceImpl) Get(ctx context.Context, profileID, id uuid.U
 		return dto.ExpenseBillResponse{}, err
 	}
 
-	return mapper.ExpenseBillToResponse(bill, imageURL, profileID), nil
+	namesByProfileIDs, err := ebs.profileService.GetNames(ctx, []uuid.UUID{bill.CreatorProfileID, bill.PayerProfileID})
+	if err != nil {
+		return dto.ExpenseBillResponse{}, err
+	}
+
+	return mapper.ExpenseBillToResponse(bill, imageURL, profileID, namesByProfileIDs), nil
 }
 
 func (ebs *expenseBillServiceImpl) Delete(ctx context.Context, profileID, id uuid.UUID) error {
