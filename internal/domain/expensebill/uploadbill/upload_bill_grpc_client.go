@@ -6,7 +6,7 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
-	"github.com/itsLeonB/stortr-protos/gen/go/expensebill/v1"
+	"github.com/itsLeonB/stortr-protos/gen/go/uploadbill/v1"
 	"github.com/rotisserie/eris"
 	"google.golang.org/grpc"
 )
@@ -19,7 +19,7 @@ type UploadBillClient interface {
 
 type uploadBillClient struct {
 	validate *validator.Validate
-	client   expensebill.ExpenseBillServiceClient
+	client   uploadbill.UploadBillServiceClient
 }
 
 func NewUploadBillClient(validate *validator.Validate, conn *grpc.ClientConn) UploadBillClient {
@@ -29,7 +29,7 @@ func NewUploadBillClient(validate *validator.Validate, conn *grpc.ClientConn) Up
 
 	return &uploadBillClient{
 		validate,
-		expensebill.NewExpenseBillServiceClient(conn),
+		uploadbill.NewUploadBillServiceClient(conn),
 	}
 }
 
@@ -69,7 +69,7 @@ func (ubc *uploadBillClient) GetURL(ctx context.Context, objectKey string) (stri
 		return "", eris.New("object key is empty")
 	}
 
-	request := expensebill.GetUrlRequest{
+	request := uploadbill.GetUrlRequest{
 		ObjectKey: objectKey,
 	}
 
@@ -86,7 +86,7 @@ func (ubc *uploadBillClient) Delete(ctx context.Context, objectKey string) error
 		return eris.New("object key is empty")
 	}
 
-	request := expensebill.DeleteRequest{
+	request := uploadbill.DeleteRequest{
 		ObjectKey: objectKey,
 	}
 
@@ -96,7 +96,7 @@ func (ubc *uploadBillClient) Delete(ctx context.Context, objectKey string) error
 }
 
 func (ubc *uploadBillClient) sendDataChunks(
-	stream grpc.ClientStreamingClient[expensebill.UploadStreamRequest, expensebill.UploadStreamResponse],
+	stream grpc.ClientStreamingClient[uploadbill.UploadStreamRequest, uploadbill.UploadStreamResponse],
 	fileStream io.ReadCloser,
 	fileSize int64,
 ) error {
@@ -114,8 +114,8 @@ func (ubc *uploadBillClient) sendDataChunks(
 		}
 
 		if n > 0 {
-			chunk := &expensebill.UploadStreamRequest{
-				Data: &expensebill.UploadStreamRequest_Chunk{
+			chunk := &uploadbill.UploadStreamRequest{
+				Data: &uploadbill.UploadStreamRequest_Chunk{
 					Chunk: buffer[:n],
 				},
 			}
