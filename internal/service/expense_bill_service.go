@@ -38,31 +38,15 @@ func NewExpenseBillService(
 }
 
 func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpenseBillRequest) (dto.ExpenseBillResponse, error) {
-	var err error
-	var namesByProfileIDs map[uuid.UUID]string
-
 	// Default PayerProfileID to the user's profile ID if not provided
 	// This is useful when the user is creating a group expense for themselves.
-	if req.PayerProfileID != req.CreatorProfileID {
-		// Check if the payer is a friend of the user
-		if isFriend, _, err := ebs.friendshipService.IsFriends(ctx, req.CreatorProfileID, req.PayerProfileID); err != nil {
-			return dto.ExpenseBillResponse{}, err
-		} else if !isFriend {
-			return dto.ExpenseBillResponse{}, ungerr.UnprocessableEntityError(appconstant.ErrNotFriends)
-		}
-		namesByProfileIDs, err = ebs.profileService.GetNames(ctx, []uuid.UUID{req.CreatorProfileID, req.PayerProfileID})
-		if err != nil {
-			return dto.ExpenseBillResponse{}, err
-		}
-	} else {
+	if req.PayerProfileID == uuid.Nil {
 		req.PayerProfileID = req.CreatorProfileID
-		creatorProfile, err := ebs.profileService.GetByID(ctx, req.CreatorProfileID)
-		if err != nil {
-			return dto.ExpenseBillResponse{}, err
-		}
-		namesByProfileIDs = map[uuid.UUID]string{
-			req.CreatorProfileID: creatorProfile.Name,
-		}
+	}
+
+	namesByProfileIDs, err := ebs.validateAndGetNames(ctx, req.PayerProfileID, req.CreatorProfileID)
+	if err != nil {
+		return dto.ExpenseBillResponse{}, err
 	}
 
 	uploadReq := uploadbill.UploadBillRequest{
@@ -143,4 +127,24 @@ func (ebs *expenseBillServiceImpl) Delete(ctx context.Context, profileID, id uui
 	}
 
 	return nil
+}
+
+func (ebs *expenseBillServiceImpl) validateAndGetNames(ctx context.Context, payerProfileID, creatorProfileID uuid.UUID) (map[uuid.UUID]string, error) {
+	if payerProfileID == creatorProfileID {
+		creatorProfile, err := ebs.profileService.GetByID(ctx, creatorProfileID)
+		if err != nil {
+			return nil, err
+		}
+
+		return map[uuid.UUID]string{creatorProfileID: creatorProfile.Name}, nil
+	}
+
+	// Check if the payer is a friend of the user
+	if isFriend, _, err := ebs.friendshipService.IsFriends(ctx, creatorProfileID, payerProfileID); err != nil {
+		return nil, err
+	} else if !isFriend {
+		return nil, ungerr.UnprocessableEntityError(appconstant.ErrNotFriends)
+	}
+
+	return ebs.profileService.GetNames(ctx, []uuid.UUID{creatorProfileID, payerProfileID})
 }
