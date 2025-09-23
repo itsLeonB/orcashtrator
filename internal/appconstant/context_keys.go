@@ -9,6 +9,7 @@ const (
 	ContextGroupExpenseID ctxKey = "groupExpenseID"
 	ContextExpenseItemID  ctxKey = "expenseItemID"
 	ContextOtherFeeID     ctxKey = "otherFeeID"
+	ContextExpenseBillID  ctxKey = "expenseBillID"
 )
 
 func (c ctxKey) String() string {

@@ -11,6 +11,7 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/auth"
 	"github.com/itsLeonB/orcashtrator/internal/domain/debt"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill"
+	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill/uploadbill"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expenseitem"
 	"github.com/itsLeonB/orcashtrator/internal/domain/friendship"
 	"github.com/itsLeonB/orcashtrator/internal/domain/groupexpense"
@@ -32,6 +33,7 @@ type Clients struct {
 	ExpenseItem    expenseitem.ExpenseItemClient
 	OtherFee       otherfee.OtherFeeClient
 	ExpenseBill    expensebill.ExpenseBillClient
+	UploadBill     uploadbill.UploadBillClient
 }
 
 func ProvideClients(configs config.ServiceClient, validate *validator.Validate, logger ezutil.Logger) *Clients {
@@ -40,15 +42,6 @@ func ProvideClients(configs config.ServiceClient, validate *validator.Validate, 
 	billsplittrConn, err := grpc.NewClient(
 		configs.BillsplittrHost,
 		grpc.WithTransportCredentials(insecure.NewCredentials()),
-		grpc.WithKeepaliveParams(keepalive.ClientParameters{
-			Time:                10 * time.Second,
-			Timeout:             5 * time.Second,
-			PermitWithoutStream: true,
-		}),
-		grpc.WithDefaultCallOptions(
-			grpc.MaxCallRecvMsgSize(appconstant.MaxFileSize),
-			grpc.MaxCallSendMsgSize(appconstant.MaxFileSize),
-		),
 	)
 	if err != nil {
 		logger.Warnf("error connecting to billsplittr client: %v", err)
@@ -76,6 +69,25 @@ func ProvideClients(configs config.ServiceClient, validate *validator.Validate, 
 		conns = append(conns, drexConn)
 	}
 
+	stortrConn, err := grpc.NewClient(
+		configs.StortrHost,
+		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		grpc.WithKeepaliveParams(keepalive.ClientParameters{
+			Time:                10 * time.Second,
+			Timeout:             5 * time.Second,
+			PermitWithoutStream: false,
+		}),
+		grpc.WithDefaultCallOptions(
+			grpc.MaxCallRecvMsgSize(appconstant.MaxFileSize),
+			grpc.MaxCallSendMsgSize(appconstant.MaxFileSize),
+		),
+	)
+	if err != nil {
+		logger.Warnf("error connecting to stortr client: %v", err)
+	} else {
+		conns = append(conns, stortrConn)
+	}
+
 	return &Clients{
 		conns,
 		auth.NewAuthClient(validate, cocoonConn),
@@ -87,6 +99,7 @@ func ProvideClients(configs config.ServiceClient, validate *validator.Validate, 
 		expenseitem.NewExpenseItemClient(validate, billsplittrConn),
 		otherfee.NewOtherFeeClient(validate, billsplittrConn),
 		expensebill.NewExpenseBillClient(validate, billsplittrConn),
+		uploadbill.NewUploadBillClient(validate, stortrConn),
 	}
 }
 

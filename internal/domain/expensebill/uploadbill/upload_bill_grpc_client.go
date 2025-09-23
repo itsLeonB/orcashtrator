@@ -1,0 +1,131 @@
+package uploadbill
+
+import (
+	"context"
+	"io"
+
+	"github.com/go-playground/validator/v10"
+	"github.com/itsLeonB/orcashtrator/internal/appconstant"
+	"github.com/itsLeonB/stortr-protos/gen/go/uploadbill/v1"
+	"github.com/rotisserie/eris"
+	"google.golang.org/grpc"
+)
+
+type UploadBillClient interface {
+	UploadStream(ctx context.Context, req *UploadBillRequest) (string, error)
+	GetURL(ctx context.Context, objectKey string) (string, error)
+	Delete(ctx context.Context, objectKey string) error
+}
+
+type uploadBillClient struct {
+	validate *validator.Validate
+	client   uploadbill.UploadBillServiceClient
+}
+
+func NewUploadBillClient(validate *validator.Validate, conn *grpc.ClientConn) UploadBillClient {
+	if validate == nil {
+		panic("validate is nil")
+	}
+
+	return &uploadBillClient{
+		validate,
+		uploadbill.NewUploadBillServiceClient(conn),
+	}
+}
+
+func (ubc *uploadBillClient) UploadStream(ctx context.Context, req *UploadBillRequest) (string, error) {
+	if err := ubc.validate.Struct(req); err != nil {
+		return "", eris.Wrap(err, appconstant.ErrStructValidation)
+	}
+
+	stream, err := ubc.client.UploadStream(ctx)
+	if err != nil {
+		return "", eris.Wrap(err, "error opening grpc client stream")
+	}
+
+	metadata, err := toBillMetadataProto(req)
+	if err != nil {
+		return "", err
+	}
+
+	if err = stream.Send(metadata); err != nil {
+		return "", eris.Wrap(err, "error sending data to grpc stream")
+	}
+
+	if err = ubc.sendDataChunks(stream, req.FileStream, req.FileSize); err != nil {
+		return "", err
+	}
+
+	response, err := stream.CloseAndRecv()
+	if err != nil {
+		return "", eris.Wrap(err, "error closing grpc stream")
+	}
+
+	return response.GetObjectKey(), nil
+}
+
+func (ubc *uploadBillClient) GetURL(ctx context.Context, objectKey string) (string, error) {
+	if objectKey == "" {
+		return "", eris.New("object key is empty")
+	}
+
+	request := uploadbill.GetUrlRequest{
+		ObjectKey: objectKey,
+	}
+
+	response, err := ubc.client.GetUrl(ctx, &request)
+	if err != nil {
+		return "", err
+	}
+
+	return response.GetUrl(), nil
+}
+
+func (ubc *uploadBillClient) Delete(ctx context.Context, objectKey string) error {
+	if objectKey == "" {
+		return eris.New("object key is empty")
+	}
+
+	request := uploadbill.DeleteRequest{
+		ObjectKey: objectKey,
+	}
+
+	_, err := ubc.client.Delete(ctx, &request)
+
+	return err
+}
+
+func (ubc *uploadBillClient) sendDataChunks(
+	stream grpc.ClientStreamingClient[uploadbill.UploadStreamRequest, uploadbill.UploadStreamResponse],
+	fileStream io.ReadCloser,
+	fileSize int64,
+) error {
+	buffer := make([]byte, appconstant.ChunkSize)
+
+	var sent int64
+
+	for {
+		n, err := fileStream.Read(buffer)
+		if err == io.EOF {
+			return nil
+		}
+		if err != nil {
+			return eris.Wrap(err, "failed to read from stream")
+		}
+
+		if n > 0 {
+			chunk := &uploadbill.UploadStreamRequest{
+				Data: &uploadbill.UploadStreamRequest_Chunk{
+					Chunk: buffer[:n],
+				},
+			}
+			if err = stream.Send(chunk); err != nil {
+				return eris.Wrap(err, "send chunk")
+			}
+			sent += int64(n)
+			if sent > fileSize {
+				return eris.Errorf("read more bytes than declared: sent=%d declared=%d", sent, fileSize)
+			}
+		}
+	}
+}

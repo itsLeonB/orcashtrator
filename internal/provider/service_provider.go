@@ -1,6 +1,7 @@
 package provider
 
 import (
+	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/service"
 )
 
@@ -17,9 +18,12 @@ type Services struct {
 	ExpenseBill    service.ExpenseBillService
 }
 
-func ProvideServices(clients *Clients) *Services {
+func ProvideServices(clients *Clients, logger ezutil.Logger) *Services {
 	if clients == nil {
 		panic("clients cannot be nil")
+	}
+	if logger == nil {
+		panic("logger cannot be nil")
 	}
 
 	authService := service.NewAuthService(clients.Auth)
@@ -57,8 +61,11 @@ func ProvideServices(clients *Clients) *Services {
 	)
 
 	expenseBillService := service.NewExpenseBillService(
+		logger,
 		friendshipService,
+		profileService,
 		clients.ExpenseBill,
+		clients.UploadBill,
 	)
 
 	return &Services{
