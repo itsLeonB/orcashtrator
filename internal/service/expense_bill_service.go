@@ -43,16 +43,7 @@ func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpense
 
 	// Default PayerProfileID to the user's profile ID if not provided
 	// This is useful when the user is creating a group expense for themselves.
-	if req.PayerProfileID == uuid.Nil {
-		req.PayerProfileID = req.CreatorProfileID
-		creatorProfile, err := ebs.profileService.GetByID(ctx, req.CreatorProfileID)
-		if err != nil {
-			return dto.ExpenseBillResponse{}, err
-		}
-		namesByProfileIDs = map[uuid.UUID]string{
-			req.CreatorProfileID: creatorProfile.Name,
-		}
-	} else if req.PayerProfileID != req.CreatorProfileID {
+	if req.PayerProfileID != req.CreatorProfileID {
 		// Check if the payer is a friend of the user
 		if isFriend, _, err := ebs.friendshipService.IsFriends(ctx, req.CreatorProfileID, req.PayerProfileID); err != nil {
 			return dto.ExpenseBillResponse{}, err
@@ -62,6 +53,15 @@ func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpense
 		namesByProfileIDs, err = ebs.profileService.GetNames(ctx, []uuid.UUID{req.CreatorProfileID, req.PayerProfileID})
 		if err != nil {
 			return dto.ExpenseBillResponse{}, err
+		}
+	} else {
+		req.PayerProfileID = req.CreatorProfileID
+		creatorProfile, err := ebs.profileService.GetByID(ctx, req.CreatorProfileID)
+		if err != nil {
+			return dto.ExpenseBillResponse{}, err
+		}
+		namesByProfileIDs = map[uuid.UUID]string{
+			req.CreatorProfileID: creatorProfile.Name,
 		}
 	}
 
