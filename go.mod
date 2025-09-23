@@ -8,7 +8,7 @@ require (
 	github.com/go-playground/validator/v10 v10.27.0
 	github.com/google/uuid v1.6.0
 	github.com/itsLeonB/audit v0.1.0
-	github.com/itsLeonB/billsplittr-protos v0.3.0
+	github.com/itsLeonB/billsplittr-protos v0.4.0-delta
 	github.com/itsLeonB/cocoon-protos v1.1.1
 	github.com/itsLeonB/drex-protos v0.1.0
 	github.com/itsLeonB/ezutil/v2 v2.1.0
