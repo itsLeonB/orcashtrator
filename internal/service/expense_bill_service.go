@@ -2,14 +2,17 @@ package service
 
 import (
 	"context"
+	"errors"
+	"sync"
 
 	"github.com/google/uuid"
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill"
-	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill/uploadbill"
+	"github.com/itsLeonB/orcashtrator/internal/domain/imageupload"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/mapper"
+	"github.com/itsLeonB/orcashtrator/internal/util"
 	"github.com/itsLeonB/ungerr"
 )
 
@@ -18,7 +21,8 @@ type expenseBillServiceImpl struct {
 	friendshipService FriendshipService
 	profileService    ProfileService
 	expenseBillClient expensebill.ExpenseBillClient
-	uploadBillClient  uploadbill.UploadBillClient
+	imageUploadClient imageupload.ImageUploadClient
+	bucketName        string
 }
 
 func NewExpenseBillService(
@@ -26,14 +30,16 @@ func NewExpenseBillService(
 	friendshipService FriendshipService,
 	profileService ProfileService,
 	expenseBillClient expensebill.ExpenseBillClient,
-	uploadBillClient uploadbill.UploadBillClient,
+	imageUploadClient imageupload.ImageUploadClient,
+	bucketName string,
 ) ExpenseBillService {
 	return &expenseBillServiceImpl{
 		logger,
 		friendshipService,
 		profileService,
 		expenseBillClient,
-		uploadBillClient,
+		imageUploadClient,
+		bucketName,
 	}
 }
 
@@ -49,29 +55,8 @@ func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpense
 		return dto.ExpenseBillResponse{}, err
 	}
 
-	uploadReq := uploadbill.UploadBillRequest{
-		FileStream:  req.ImageReader,
-		ContentType: req.ContentType,
-		Filename:    req.Filename,
-		FileSize:    req.FileSize,
-	}
-
-	objectKey, err := ebs.uploadBillClient.UploadStream(ctx, &uploadReq)
+	savedBill, err := ebs.uploadAndSave(ctx, req)
 	if err != nil {
-		return dto.ExpenseBillResponse{}, err
-	}
-
-	request := expensebill.ExpenseBill{
-		CreatorProfileID: req.CreatorProfileID,
-		PayerProfileID:   req.PayerProfileID,
-		ObjectKey:        objectKey,
-	}
-
-	savedBill, err := ebs.expenseBillClient.Save(ctx, request)
-	if err != nil {
-		if err = ebs.uploadBillClient.Delete(ctx, objectKey); err != nil {
-			ebs.logger.Errorf("error rolling back bill upload: %v", err)
-		}
 		return dto.ExpenseBillResponse{}, err
 	}
 
@@ -99,7 +84,7 @@ func (ebs *expenseBillServiceImpl) Get(ctx context.Context, profileID, id uuid.U
 		return dto.ExpenseBillResponse{}, err
 	}
 
-	imageURL, err := ebs.uploadBillClient.GetURL(ctx, bill.ObjectKey)
+	imageURL, err := ebs.imageUploadClient.GetURL(ctx, ebs.objectKeyToFileID(bill.ObjectKey))
 	if err != nil {
 		return dto.ExpenseBillResponse{}, err
 	}
@@ -122,11 +107,90 @@ func (ebs *expenseBillServiceImpl) Delete(ctx context.Context, profileID, id uui
 		return err
 	}
 
-	if err = ebs.uploadBillClient.Delete(ctx, bill.ObjectKey); err != nil {
+	if err = ebs.imageUploadClient.Delete(ctx, ebs.objectKeyToFileID(bill.ObjectKey)); err != nil {
 		ebs.logger.Errorf("error deleting bill image from storage: %v", err)
 	}
 
 	return nil
+}
+
+func (ebs *expenseBillServiceImpl) uploadAndSave(ctx context.Context, req *dto.NewExpenseBillRequest) (expensebill.ExpenseBill, error) {
+	fileID := ebs.objectKeyToFileID(util.GenerateObjectKey(req.Filename))
+	var savedBill expensebill.ExpenseBill
+	var wg sync.WaitGroup
+	var err error
+
+	wg.Go(func() {
+		if e := ebs.doUpload(ctx, req, fileID); e != nil {
+			err = errors.Join(err, e)
+		}
+	})
+
+	wg.Go(func() {
+		if insertedBill, e := ebs.saveEntry(ctx, req, fileID.ObjectKey); e != nil {
+			err = errors.Join(err, e)
+		} else {
+			savedBill = insertedBill
+		}
+	})
+
+	wg.Wait()
+
+	if err != nil {
+		ebs.rollbackUpload(ctx, fileID, req.CreatorProfileID, savedBill.ID)
+		return expensebill.ExpenseBill{}, err
+	}
+
+	return savedBill, nil
+}
+
+func (ebs *expenseBillServiceImpl) rollbackUpload(
+	ctx context.Context,
+	fileID imageupload.FileIdentifier,
+	creatorProfileID, billID uuid.UUID,
+) {
+	var wg sync.WaitGroup
+	wg.Go(func() {
+		if err := ebs.imageUploadClient.Delete(ctx, fileID); err != nil {
+			ebs.logger.Errorf("error rolling back bill upload: %v", err)
+		}
+	})
+	wg.Go(func() {
+		if err := ebs.expenseBillClient.Delete(ctx, creatorProfileID, billID); err != nil {
+			ebs.logger.Errorf("error rolling back bill upload: %v", err)
+		}
+	})
+	wg.Wait()
+}
+
+func (ebs *expenseBillServiceImpl) doUpload(
+	ctx context.Context,
+	req *dto.NewExpenseBillRequest,
+	fileID imageupload.FileIdentifier,
+) error {
+	uploadReq := imageupload.ImageUploadRequest{
+		FileStream:     req.ImageReader,
+		ContentType:    req.ContentType,
+		FileSize:       req.FileSize,
+		FileIdentifier: fileID,
+	}
+
+	_, err := ebs.imageUploadClient.UploadStream(ctx, &uploadReq)
+	return err
+}
+
+func (ebs *expenseBillServiceImpl) saveEntry(
+	ctx context.Context,
+	req *dto.NewExpenseBillRequest,
+	objectKey string,
+) (expensebill.ExpenseBill, error) {
+	request := expensebill.ExpenseBill{
+		CreatorProfileID: req.CreatorProfileID,
+		PayerProfileID:   req.PayerProfileID,
+		ObjectKey:        objectKey,
+	}
+
+	return ebs.expenseBillClient.Save(ctx, request)
 }
 
 func (ebs *expenseBillServiceImpl) validateAndGetNames(ctx context.Context, payerProfileID, creatorProfileID uuid.UUID) (map[uuid.UUID]string, error) {
@@ -147,4 +211,11 @@ func (ebs *expenseBillServiceImpl) validateAndGetNames(ctx context.Context, paye
 	}
 
 	return ebs.profileService.GetNames(ctx, []uuid.UUID{creatorProfileID, payerProfileID})
+}
+
+func (ebs *expenseBillServiceImpl) objectKeyToFileID(objectKey string) imageupload.FileIdentifier {
+	return imageupload.FileIdentifier{
+		BucketName: ebs.bucketName,
+		ObjectKey:  objectKey,
+	}
 }

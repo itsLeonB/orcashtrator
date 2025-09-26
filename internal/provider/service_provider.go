@@ -2,6 +2,7 @@ package provider
 
 import (
 	"github.com/itsLeonB/ezutil/v2"
+	"github.com/itsLeonB/orcashtrator/internal/config"
 	"github.com/itsLeonB/orcashtrator/internal/service"
 )
 
@@ -18,7 +19,7 @@ type Services struct {
 	ExpenseBill    service.ExpenseBillService
 }
 
-func ProvideServices(clients *Clients, logger ezutil.Logger) *Services {
+func ProvideServices(clients *Clients, logger ezutil.Logger, cfg config.Storage) *Services {
 	if clients == nil {
 		panic("clients cannot be nil")
 	}
@@ -65,7 +66,8 @@ func ProvideServices(clients *Clients, logger ezutil.Logger) *Services {
 		friendshipService,
 		profileService,
 		clients.ExpenseBill,
-		clients.UploadBill,
+		clients.ImageUpload,
+		cfg.BucketNameExpenseBill,
 	)
 
 	return &Services{

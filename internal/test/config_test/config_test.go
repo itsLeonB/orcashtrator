@@ -19,6 +19,7 @@ func TestLoad(t *testing.T) {
 		_ = os.Setenv("SERVICE_CLIENT_COCOON_HOST", "http://cocoon")
 		_ = os.Setenv("SERVICE_CLIENT_DREX_HOST", "http://drex")
 		_ = os.Setenv("SERVICE_CLIENT_STORTR_HOST", "http://stortr")
+		_ = os.Setenv("STORAGE_BUCKET_NAME_EXPENSE_BILL", "bills")
 
 		defer func() {
 			_ = os.Unsetenv("APP_NAME")
@@ -29,6 +30,7 @@ func TestLoad(t *testing.T) {
 			_ = os.Unsetenv("SERVICE_CLIENT_COCOON_HOST")
 			_ = os.Unsetenv("SERVICE_CLIENT_DREX_HOST")
 			_ = os.Unsetenv("SERVICE_CLIENT_STORTR_HOST")
+			_ = os.Unsetenv("STORAGE_BUCKET_NAME_EXPENSE_BILL")
 		}()
 
 		cfg := config.Load()
@@ -47,12 +49,14 @@ func TestLoad(t *testing.T) {
 		_ = os.Setenv("SERVICE_CLIENT_COCOON_HOST", "http://cocoon")
 		_ = os.Setenv("SERVICE_CLIENT_DREX_HOST", "http://drex")
 		_ = os.Setenv("SERVICE_CLIENT_STORTR_HOST", "http://stortr")
+		_ = os.Setenv("STORAGE_BUCKET_NAME_EXPENSE_BILL", "bills")
 
 		defer func() {
 			_ = os.Unsetenv("SERVICE_CLIENT_BILLSPLITTR_HOST")
 			_ = os.Unsetenv("SERVICE_CLIENT_COCOON_HOST")
 			_ = os.Unsetenv("SERVICE_CLIENT_DREX_HOST")
 			_ = os.Unsetenv("SERVICE_CLIENT_STORTR_HOST")
+			_ = os.Unsetenv("STORAGE_BUCKET_NAME_EXPENSE_BILL")
 		}()
 
 		cfg := config.Load()
