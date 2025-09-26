@@ -6,6 +6,7 @@ import (
 
 type Config struct {
 	App
+	Valkey
 	Storage
 	ServiceClient
 }
@@ -13,6 +14,9 @@ type Config struct {
 func Load() Config {
 	var app App
 	envconfig.MustProcess("APP", &app)
+
+	var valkey Valkey
+	envconfig.MustProcess("VALKEY", &valkey)
 
 	var storage Storage
 	envconfig.MustProcess("STORAGE", &storage)
@@ -22,6 +26,7 @@ func Load() Config {
 
 	return Config{
 		app,
+		valkey,
 		storage,
 		svcClient,
 	}

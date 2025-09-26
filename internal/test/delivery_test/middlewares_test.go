@@ -36,7 +36,6 @@ func TestMiddlewaresIntegration(t *testing.T) {
 	// by ensuring the HTTP setup works correctly
 	cfg := config.Config{
 		App: config.App{
-			Name:       "TestApp",
 			Env:        "debug",
 			Port:       "8080",
 			Timeout:    time.Second * 10,
@@ -48,7 +47,7 @@ func TestMiddlewaresIntegration(t *testing.T) {
 			DrexHost:        "http://localhost:8083",
 		},
 	}
-	
+
 	assert.NotPanics(t, func() {
 		server := http.Setup(cfg)
 		assert.NotNil(t, server)

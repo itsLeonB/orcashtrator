@@ -5,11 +5,11 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/config"
 )
 
-func ProvideLogger(configs config.App) ezutil.Logger {
+func ProvideLogger(env string) ezutil.Logger {
 	minLevel := 0
-	if configs.Env == "release" {
+	if env == "release" {
 		minLevel = 1
 	}
 
-	return ezutil.NewSimpleLogger(configs.Name, true, minLevel)
+	return ezutil.NewSimpleLogger(config.AppName, true, minLevel)
 }

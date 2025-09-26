@@ -19,7 +19,12 @@ type Services struct {
 	ExpenseBill    service.ExpenseBillService
 }
 
-func ProvideServices(clients *Clients, logger ezutil.Logger, cfg config.Storage) *Services {
+func ProvideServices(
+	clients *Clients,
+	logger ezutil.Logger,
+	cfg config.Storage,
+	queues *Queues,
+) *Services {
 	if clients == nil {
 		panic("clients cannot be nil")
 	}
@@ -68,6 +73,7 @@ func ProvideServices(clients *Clients, logger ezutil.Logger, cfg config.Storage)
 		clients.ExpenseBill,
 		clients.ImageUpload,
 		cfg.BucketNameExpenseBill,
+		queues.ExpenseBillUploaded,
 	)
 
 	return &Services{
