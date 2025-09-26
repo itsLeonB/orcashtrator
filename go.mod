@@ -13,7 +13,7 @@ require (
 	github.com/itsLeonB/drex-protos v0.1.0
 	github.com/itsLeonB/ezutil/v2 v2.2.0
 	github.com/itsLeonB/ginkgo v0.2.0
-	github.com/itsLeonB/stortr-protos v0.1.2-eta
+	github.com/itsLeonB/stortr-protos v0.1.2
 	github.com/itsLeonB/ungerr v0.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
