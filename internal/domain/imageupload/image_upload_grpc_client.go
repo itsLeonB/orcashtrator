@@ -1,4 +1,4 @@
-package uploadbill
+package imageupload
 
 import (
 	"context"
@@ -6,34 +6,35 @@ import (
 
 	"github.com/go-playground/validator/v10"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
-	"github.com/itsLeonB/stortr-protos/gen/go/uploadbill/v1"
+	"github.com/itsLeonB/stortr-protos/gen/go/genericupload/v1"
+	"github.com/itsLeonB/stortr-protos/gen/go/imageupload/v1"
 	"github.com/rotisserie/eris"
 	"google.golang.org/grpc"
 )
 
-type UploadBillClient interface {
-	UploadStream(ctx context.Context, req *UploadBillRequest) (string, error)
-	GetURL(ctx context.Context, objectKey string) (string, error)
-	Delete(ctx context.Context, objectKey string) error
+type ImageUploadClient interface {
+	UploadStream(ctx context.Context, req *ImageUploadRequest) (string, error)
+	GetURL(ctx context.Context, fileID FileIdentifier) (string, error)
+	Delete(ctx context.Context, fileID FileIdentifier) error
 }
 
 type uploadBillClient struct {
 	validate *validator.Validate
-	client   uploadbill.UploadBillServiceClient
+	client   imageupload.ImageUploadServiceClient
 }
 
-func NewUploadBillClient(validate *validator.Validate, conn *grpc.ClientConn) UploadBillClient {
+func NewImageUploadClient(validate *validator.Validate, conn *grpc.ClientConn) ImageUploadClient {
 	if validate == nil {
 		panic("validate is nil")
 	}
 
 	return &uploadBillClient{
 		validate,
-		uploadbill.NewUploadBillServiceClient(conn),
+		imageupload.NewImageUploadServiceClient(conn),
 	}
 }
 
-func (ubc *uploadBillClient) UploadStream(ctx context.Context, req *UploadBillRequest) (string, error) {
+func (ubc *uploadBillClient) UploadStream(ctx context.Context, req *ImageUploadRequest) (string, error) {
 	if err := ubc.validate.Struct(req); err != nil {
 		return "", eris.Wrap(err, appconstant.ErrStructValidation)
 	}
@@ -43,7 +44,7 @@ func (ubc *uploadBillClient) UploadStream(ctx context.Context, req *UploadBillRe
 		return "", eris.Wrap(err, "error opening grpc client stream")
 	}
 
-	metadata, err := toBillMetadataProto(req)
+	metadata, err := toMetadataProto(req)
 	if err != nil {
 		return "", err
 	}
@@ -61,16 +62,12 @@ func (ubc *uploadBillClient) UploadStream(ctx context.Context, req *UploadBillRe
 		return "", eris.Wrap(err, "error closing grpc stream")
 	}
 
-	return response.GetObjectKey(), nil
+	return response.GetUri(), nil
 }
 
-func (ubc *uploadBillClient) GetURL(ctx context.Context, objectKey string) (string, error) {
-	if objectKey == "" {
-		return "", eris.New("object key is empty")
-	}
-
-	request := uploadbill.GetUrlRequest{
-		ObjectKey: objectKey,
+func (ubc *uploadBillClient) GetURL(ctx context.Context, fileID FileIdentifier) (string, error) {
+	request := genericupload.GetUrlRequest{
+		FileIdentifier: toFileIdentifierProto(fileID),
 	}
 
 	response, err := ubc.client.GetUrl(ctx, &request)
@@ -81,13 +78,9 @@ func (ubc *uploadBillClient) GetURL(ctx context.Context, objectKey string) (stri
 	return response.GetUrl(), nil
 }
 
-func (ubc *uploadBillClient) Delete(ctx context.Context, objectKey string) error {
-	if objectKey == "" {
-		return eris.New("object key is empty")
-	}
-
-	request := uploadbill.DeleteRequest{
-		ObjectKey: objectKey,
+func (ubc *uploadBillClient) Delete(ctx context.Context, fileID FileIdentifier) error {
+	request := genericupload.DeleteRequest{
+		FileIdentifier: toFileIdentifierProto(fileID),
 	}
 
 	_, err := ubc.client.Delete(ctx, &request)
@@ -96,7 +89,7 @@ func (ubc *uploadBillClient) Delete(ctx context.Context, objectKey string) error
 }
 
 func (ubc *uploadBillClient) sendDataChunks(
-	stream grpc.ClientStreamingClient[uploadbill.UploadStreamRequest, uploadbill.UploadStreamResponse],
+	stream grpc.ClientStreamingClient[genericupload.UploadStreamRequest, genericupload.UploadStreamResponse],
 	fileStream io.ReadCloser,
 	fileSize int64,
 ) error {
@@ -114,8 +107,8 @@ func (ubc *uploadBillClient) sendDataChunks(
 		}
 
 		if n > 0 {
-			chunk := &uploadbill.UploadStreamRequest{
-				Data: &uploadbill.UploadStreamRequest_Chunk{
+			chunk := &genericupload.UploadStreamRequest{
+				Data: &genericupload.UploadStreamRequest_Chunk{
 					Chunk: buffer[:n],
 				},
 			}

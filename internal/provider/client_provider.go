@@ -11,10 +11,10 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/auth"
 	"github.com/itsLeonB/orcashtrator/internal/domain/debt"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill"
-	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill/uploadbill"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expenseitem"
 	"github.com/itsLeonB/orcashtrator/internal/domain/friendship"
 	"github.com/itsLeonB/orcashtrator/internal/domain/groupexpense"
+	"github.com/itsLeonB/orcashtrator/internal/domain/imageupload"
 	"github.com/itsLeonB/orcashtrator/internal/domain/otherfee"
 	"github.com/itsLeonB/orcashtrator/internal/domain/profile"
 	"google.golang.org/grpc"
@@ -33,7 +33,7 @@ type Clients struct {
 	ExpenseItem    expenseitem.ExpenseItemClient
 	OtherFee       otherfee.OtherFeeClient
 	ExpenseBill    expensebill.ExpenseBillClient
-	UploadBill     uploadbill.UploadBillClient
+	ImageUpload    imageupload.ImageUploadClient
 }
 
 func ProvideClients(configs config.ServiceClient, validate *validator.Validate, logger ezutil.Logger) *Clients {
@@ -99,7 +99,7 @@ func ProvideClients(configs config.ServiceClient, validate *validator.Validate, 
 		expenseitem.NewExpenseItemClient(validate, billsplittrConn),
 		otherfee.NewOtherFeeClient(validate, billsplittrConn),
 		expensebill.NewExpenseBillClient(validate, billsplittrConn),
-		uploadbill.NewUploadBillClient(validate, stortrConn),
+		imageupload.NewImageUploadClient(validate, stortrConn),
 	}
 }
 

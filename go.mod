@@ -11,9 +11,9 @@ require (
 	github.com/itsLeonB/billsplittr-protos v0.4.0
 	github.com/itsLeonB/cocoon-protos v1.1.1
 	github.com/itsLeonB/drex-protos v0.1.0
-	github.com/itsLeonB/ezutil/v2 v2.1.0
+	github.com/itsLeonB/ezutil/v2 v2.2.0
 	github.com/itsLeonB/ginkgo v0.2.0
-	github.com/itsLeonB/stortr-protos v0.1.1
+	github.com/itsLeonB/stortr-protos v0.1.2-eta
 	github.com/itsLeonB/ungerr v0.1.0
 	github.com/joho/godotenv v1.5.1
 	github.com/kelseyhightower/envconfig v1.4.0
@@ -36,6 +36,7 @@ require (
 	github.com/goccy/go-json v0.10.5 // indirect
 	github.com/json-iterator/go v1.1.12 // indirect
 	github.com/klauspost/cpuid/v2 v2.2.10 // indirect
+	github.com/kr/pretty v0.3.1 // indirect
 	github.com/leodido/go-urn v1.4.0 // indirect
 	github.com/mattn/go-isatty v0.0.20 // indirect
 	github.com/modern-go/concurrent v0.0.0-20180306012644-bacd9c7ef1dd // indirect
@@ -49,7 +50,7 @@ require (
 	golang.org/x/arch v0.18.0 // indirect
 	golang.org/x/crypto v0.41.0 // indirect
 	golang.org/x/net v0.43.0 // indirect
-	golang.org/x/sys v0.35.0 // indirect
+	golang.org/x/sys v0.36.0 // indirect
 	google.golang.org/genproto v0.0.0-20250908214217-97024824d090 // indirect
 	google.golang.org/genproto/googleapis/rpc v0.0.0-20250826171959-ef028d996bc1 // indirect
 	google.golang.org/protobuf v1.36.9 // indirect
