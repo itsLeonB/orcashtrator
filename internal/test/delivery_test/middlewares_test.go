@@ -49,7 +49,8 @@ func TestMiddlewaresIntegration(t *testing.T) {
 	}
 
 	assert.NotPanics(t, func() {
-		server := http.Setup(cfg)
+		server, err := http.Setup(cfg)
 		assert.NotNil(t, server)
+		assert.NoError(t, err)
 	})
 }

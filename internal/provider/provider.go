@@ -16,18 +16,25 @@ type Provider struct {
 	*Services
 }
 
-func All(configs config.Config) *Provider {
+func All(configs config.Config) (*Provider, error) {
 	logger := ProvideLogger(configs.Env)
 	db := meq.NewAsynqDB(logger, configs.ToRedisOpts())
 	clients := ProvideClients(configs.ServiceClient, validator.New(), logger)
-	queues := ProvideQueues(logger, db)
+	queues, err := ProvideQueues(logger, db)
+	if err != nil {
+		return nil, err
+	}
+	services, err := ProvideServices(clients, logger, configs.Storage, queues)
+	if err != nil {
+		return nil, err
+	}
 
 	return &Provider{
 		DB:       db,
 		Logger:   logger,
 		Clients:  clients,
-		Services: ProvideServices(clients, logger, configs.Storage, queues),
-	}
+		Services: services,
+	}, nil
 }
 
 func (p *Provider) Shutdown() error {

@@ -4,6 +4,7 @@ import (
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/config"
 	"github.com/itsLeonB/orcashtrator/internal/service"
+	"github.com/rotisserie/eris"
 )
 
 type Services struct {
@@ -24,12 +25,15 @@ func ProvideServices(
 	logger ezutil.Logger,
 	cfg config.Storage,
 	queues *Queues,
-) *Services {
+) (*Services, error) {
 	if clients == nil {
-		panic("clients cannot be nil")
+		return nil, eris.New("clients cannot be nil")
 	}
 	if logger == nil {
-		panic("logger cannot be nil")
+		return nil, eris.New("logger cannot be nil")
+	}
+	if queues == nil {
+		return nil, eris.New("queue cannot be nil")
 	}
 
 	authService := service.NewAuthService(clients.Auth)
@@ -87,5 +91,5 @@ func ProvideServices(
 		expenseItemSvc,
 		otherFeeSvc,
 		expenseBillService,
-	}
+	}, nil
 }
