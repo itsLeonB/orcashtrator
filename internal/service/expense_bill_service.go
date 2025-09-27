@@ -147,6 +147,7 @@ func (ebs *expenseBillServiceImpl) uploadAndSave(ctx context.Context, req *dto.N
 
 	if err == nil && uri != "" {
 		if e := ebs.taskQueue.Enqueue(ctx, config.AppName, message.ExpenseBillUploaded{
+			ID:  savedBill.ID,
 			URI: uri,
 		}); e != nil {
 			err = errors.Join(err, e)
