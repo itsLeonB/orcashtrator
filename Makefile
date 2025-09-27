@@ -1,18 +1,17 @@
 TEST_DIR := ./internal/test
 
-.PHONY:
-	help
-	http
-	http-hot
-	lint
-	test
-	test-verbose
-	test-coverage
-	test-coverage-html
-	test-clean
-	build
-	install-pre-push-hook
-	uninstall-pre-push-hook
+.PHONY: help \
+http \
+http-hot \
+lint \
+test \
+test-verbose \
+test-coverage \
+test-coverage-html \
+test-clean \
+build \
+install-pre-push-hook \
+uninstall-pre-push-hook
 
 help:
 	@echo "Makefile commands:"
@@ -24,6 +23,7 @@ help:
 	@echo "  make test-coverage           - Run all tests with coverage report"
 	@echo "  make test-coverage-html      - Run all tests and generate HTML coverage report"
 	@echo "  make test-clean              - Clean test cache and run tests"
+	@echo "  make build                   - Build the project for production"
 	@echo "  make install-pre-push-hook   - Install git pre-push hook for linting and testing"
 	@echo "  make uninstall-pre-push-hook - Uninstall git pre-push hook"
 

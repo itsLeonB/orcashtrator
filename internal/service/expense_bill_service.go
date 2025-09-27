@@ -7,11 +7,14 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/itsLeonB/ezutil/v2"
+	"github.com/itsLeonB/meq"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
+	"github.com/itsLeonB/orcashtrator/internal/config"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill"
 	"github.com/itsLeonB/orcashtrator/internal/domain/imageupload"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/mapper"
+	"github.com/itsLeonB/orcashtrator/internal/message"
 	"github.com/itsLeonB/orcashtrator/internal/util"
 	"github.com/itsLeonB/ungerr"
 )
@@ -23,6 +26,7 @@ type expenseBillServiceImpl struct {
 	expenseBillClient expensebill.ExpenseBillClient
 	imageUploadClient imageupload.ImageUploadClient
 	bucketName        string
+	taskQueue         meq.TaskQueue[message.ExpenseBillUploaded]
 }
 
 func NewExpenseBillService(
@@ -32,6 +36,7 @@ func NewExpenseBillService(
 	expenseBillClient expensebill.ExpenseBillClient,
 	imageUploadClient imageupload.ImageUploadClient,
 	bucketName string,
+	taskQueue meq.TaskQueue[message.ExpenseBillUploaded],
 ) ExpenseBillService {
 	return &expenseBillServiceImpl{
 		logger,
@@ -40,6 +45,7 @@ func NewExpenseBillService(
 		expenseBillClient,
 		imageUploadClient,
 		bucketName,
+		taskQueue,
 	}
 }
 
@@ -118,11 +124,14 @@ func (ebs *expenseBillServiceImpl) uploadAndSave(ctx context.Context, req *dto.N
 	fileID := ebs.objectKeyToFileID(util.GenerateObjectKey(req.Filename))
 	var savedBill expensebill.ExpenseBill
 	var wg sync.WaitGroup
+	var uri string
 	var err error
 
 	wg.Go(func() {
-		if e := ebs.doUpload(ctx, req, fileID); e != nil {
+		if billUri, e := ebs.doUpload(ctx, req, fileID); e != nil {
 			err = errors.Join(err, e)
+		} else {
+			uri = billUri
 		}
 	})
 
@@ -135,6 +144,14 @@ func (ebs *expenseBillServiceImpl) uploadAndSave(ctx context.Context, req *dto.N
 	})
 
 	wg.Wait()
+
+	if err == nil && uri != "" {
+		if e := ebs.taskQueue.Enqueue(ctx, config.AppName, message.ExpenseBillUploaded{
+			URI: uri,
+		}); e != nil {
+			err = errors.Join(err, e)
+		}
+	}
 
 	if err != nil {
 		ebs.rollbackUpload(ctx, fileID, req.CreatorProfileID, savedBill.ID)
@@ -167,7 +184,7 @@ func (ebs *expenseBillServiceImpl) doUpload(
 	ctx context.Context,
 	req *dto.NewExpenseBillRequest,
 	fileID imageupload.FileIdentifier,
-) error {
+) (string, error) {
 	uploadReq := imageupload.ImageUploadRequest{
 		FileStream:     req.ImageReader,
 		ContentType:    req.ContentType,
@@ -175,8 +192,7 @@ func (ebs *expenseBillServiceImpl) doUpload(
 		FileIdentifier: fileID,
 	}
 
-	_, err := ebs.imageUploadClient.UploadStream(ctx, &uploadReq)
-	return err
+	return ebs.imageUploadClient.UploadStream(ctx, &uploadReq)
 }
 
 func (ebs *expenseBillServiceImpl) saveEntry(

@@ -10,8 +10,11 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/provider"
 )
 
-func Setup(configs config.Config) *ginkgo.HttpServer {
-	providers := provider.All(configs)
+func Setup(configs config.Config) (*ginkgo.HttpServer, error) {
+	providers, err := provider.All(configs)
+	if err != nil {
+		return nil, err
+	}
 
 	gin.SetMode(configs.Env)
 	r := gin.New()
@@ -26,5 +29,10 @@ func Setup(configs config.Config) *ginkgo.HttpServer {
 		IdleTimeout:       configs.Timeout,
 	}
 
-	return ginkgo.NewHttpServer(srv, configs.Timeout, providers.Logger, providers.Shutdown)
+	return ginkgo.NewHttpServer(
+		srv,
+		configs.Timeout,
+		providers.Logger,
+		providers.Shutdown,
+	), nil
 }
