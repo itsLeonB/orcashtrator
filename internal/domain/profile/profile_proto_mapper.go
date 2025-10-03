@@ -7,12 +7,16 @@ import (
 	"github.com/rotisserie/eris"
 )
 
-func fromProfileProto(p *profile.Profile) (Profile, error) {
+func fromProfileProto(p *profile.ProfileResponse) (Profile, error) {
 	if p == nil {
+		return Profile{}, eris.New("profile response is nil")
+	}
+	profile := p.GetProfile()
+	if profile == nil {
 		return Profile{}, eris.New("profile is nil")
 	}
 
-	userID, err := ezutil.Parse[uuid.UUID](p.GetUserId())
+	userID, err := ezutil.Parse[uuid.UUID](profile.GetUserId())
 	if err != nil {
 		return Profile{}, err
 	}
@@ -28,12 +32,12 @@ func fromProfileProto(p *profile.Profile) (Profile, error) {
 	}
 
 	return Profile{
-		ID:          id,
-		UserID:      userID,
-		Name:        p.GetName(),
-		IsAnonymous: p.IsAnonymous,
-		CreatedAt:   ezutil.FromProtoTime(amp.GetCreatedAt()),
-		UpdatedAt:   ezutil.FromProtoTime(amp.GetUpdatedAt()),
-		DeletedAt:   ezutil.FromProtoTime(amp.GetDeletedAt()),
+		ID:        id,
+		UserID:    userID,
+		Name:      profile.GetName(),
+		Avatar:    profile.GetAvatar(),
+		CreatedAt: ezutil.FromProtoTime(amp.GetCreatedAt()),
+		UpdatedAt: ezutil.FromProtoTime(amp.GetUpdatedAt()),
+		DeletedAt: ezutil.FromProtoTime(amp.GetDeletedAt()),
 	}, nil
 }

@@ -13,8 +13,12 @@ type profileServiceGrpc struct {
 	profileClient profile.ProfileClient
 }
 
-func NewProfileService(profileClient profile.ProfileClient) ProfileService {
-	return &profileServiceGrpc{profileClient}
+func NewProfileService(
+	profileClient profile.ProfileClient,
+) ProfileService {
+	return &profileServiceGrpc{
+		profileClient,
+	}
 }
 
 func (ps *profileServiceGrpc) GetByID(ctx context.Context, id uuid.UUID) (dto.ProfileResponse, error) {
@@ -40,16 +44,16 @@ func (ps *profileServiceGrpc) GetNames(ctx context.Context, ids []uuid.UUID) (ma
 	return namesByProfileID, nil
 }
 
-func (ps *profileServiceGrpc) GetByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]dto.ProfileResponse, error) {
-	profiles, err := ps.profileClient.GetByIDs(ctx, ids)
+func (ps *profileServiceGrpc) Update(ctx context.Context, id uuid.UUID, name string) (dto.ProfileResponse, error) {
+	request := profile.UpdateRequest{
+		ID:   id,
+		Name: name,
+	}
+
+	updatedProfile, err := ps.profileClient.Update(ctx, request)
 	if err != nil {
-		return nil, err
+		return dto.ProfileResponse{}, err
 	}
 
-	namesByProfileID := make(map[uuid.UUID]dto.ProfileResponse, len(profiles))
-	for _, profile := range profiles {
-		namesByProfileID[profile.ID] = mapper.ProfileToResponse(profile)
-	}
-
-	return namesByProfileID, nil
+	return mapper.ProfileToResponse(updatedProfile), nil
 }
