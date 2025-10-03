@@ -27,7 +27,9 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 
 	protectedRoutes := v1.Group("/", middlewares.auth)
 
-	protectedRoutes.GET("/profile", handlers.Profile.HandleProfile())
+	profileRoutes := protectedRoutes.Group("/profile")
+	profileRoutes.GET("", handlers.Profile.HandleProfile())
+	profileRoutes.PATCH("", handlers.Profile.HandleUpdate())
 
 	friendshipRoutes := protectedRoutes.Group("/friendships")
 	friendshipRoutes.POST("", handlers.Friendship.HandleCreateAnonymousFriendship())

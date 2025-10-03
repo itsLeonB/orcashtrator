@@ -16,6 +16,7 @@ type ProfileClient interface {
 	Get(ctx context.Context, id uuid.UUID) (Profile, error)
 	Create(ctx context.Context, req CreateRequest) (Profile, error)
 	GetByIDs(ctx context.Context, ids uuid.UUIDs) ([]Profile, error)
+	Update(ctx context.Context, req UpdateRequest) (Profile, error)
 }
 
 type profileClient struct {
@@ -90,4 +91,22 @@ func (pc *profileClient) GetByIDs(ctx context.Context, ids uuid.UUIDs) ([]Profil
 	}
 
 	return ezutil.MapSliceWithError(response.GetProfiles(), fromProfileProto)
+}
+
+func (pc *profileClient) Update(ctx context.Context, req UpdateRequest) (Profile, error) {
+	request := &profile.UpdateRequest{
+		Id: req.ID.String(),
+		Profile: &profile.Profile{
+			UserId: req.UserID.String(),
+			Name:   req.Name,
+			Avatar: req.Avatar,
+		},
+	}
+
+	response, err := pc.client.Update(ctx, request)
+	if err != nil {
+		return Profile{}, err
+	}
+
+	return fromProfileProto(response.GetProfile())
 }

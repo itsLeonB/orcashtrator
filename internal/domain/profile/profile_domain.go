@@ -7,11 +7,11 @@ import (
 )
 
 type Profile struct {
-	ID          uuid.UUID
-	UserID      uuid.UUID
-	Name        string
-	IsAnonymous bool
-	CreatedAt   time.Time
-	UpdatedAt   time.Time
-	DeletedAt   time.Time
+	ID        uuid.UUID
+	UserID    uuid.UUID
+	Name      string
+	Avatar    string
+	CreatedAt time.Time
+	UpdatedAt time.Time
+	DeletedAt time.Time
 }

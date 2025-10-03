@@ -1,6 +1,7 @@
 package mapper
 
 import (
+	"github.com/google/uuid"
 	"github.com/itsLeonB/orcashtrator/internal/domain/profile"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 )
@@ -10,9 +11,10 @@ func ProfileToResponse(response profile.Profile) dto.ProfileResponse {
 		ID:          response.ID,
 		UserID:      response.UserID,
 		Name:        response.Name,
+		Avatar:      response.Avatar,
 		CreatedAt:   response.CreatedAt,
 		UpdatedAt:   response.UpdatedAt,
 		DeletedAt:   response.DeletedAt,
-		IsAnonymous: response.IsAnonymous,
+		IsAnonymous: response.UserID == uuid.Nil,
 	}
 }
