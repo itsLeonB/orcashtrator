@@ -56,8 +56,8 @@ func (as *authServiceGrpc) VerifyToken(ctx context.Context, token string) (bool,
 	return as.authClient.VerifyToken(ctx, token)
 }
 
-func (as *authServiceGrpc) GetOAuth2URL(ctx context.Context, provider, state string) (string, error) {
-	return as.authClient.GetOAuth2URL(ctx, provider, state)
+func (as *authServiceGrpc) GetOAuth2URL(ctx context.Context, provider string) (string, error) {
+	return as.authClient.GetOAuth2URL(ctx, provider)
 }
 func (as *authServiceGrpc) OAuth2Login(ctx context.Context, provider, code, state string) (dto.LoginResponse, error) {
 	request := auth.OAuthLoginRequest{

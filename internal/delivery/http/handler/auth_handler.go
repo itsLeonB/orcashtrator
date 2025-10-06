@@ -1,8 +1,6 @@
 package handler
 
 import (
-	"crypto/rand"
-	"encoding/base64"
 	"net/http"
 
 	"github.com/gin-gonic/gin"
@@ -12,7 +10,6 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 	"github.com/itsLeonB/orcashtrator/internal/service"
 	"github.com/itsLeonB/ungerr"
-	"github.com/rotisserie/eris"
 )
 
 type AuthHandler struct {
@@ -77,15 +74,7 @@ func (ah *AuthHandler) HandleOAuth2Login() gin.HandlerFunc {
 			return
 		}
 
-		state, err := generateStateToken()
-		if err != nil {
-			_ = ctx.Error(err)
-			return
-		}
-
-		ctx.SetCookie("oauth_state", state, 300, "/", "", true, true)
-
-		url, err := ah.authService.GetOAuth2URL(ctx, provider, state)
+		url, err := ah.authService.GetOAuth2URL(ctx, provider)
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -104,13 +93,6 @@ func (ah *AuthHandler) HandleOAuth2Callback() gin.HandlerFunc {
 		code := ctx.Query("code")
 		state := ctx.Query("state")
 
-		cookieState, err := ctx.Cookie("oauth_state")
-		if err != nil || cookieState != state {
-			return 0, "", nil, eris.Wrap(err, "invalid state parameter")
-		}
-
-		ctx.SetCookie("oauth_state", "", -1, "/", "", true, true)
-
 		response, err := ah.authService.OAuth2Login(ctx, provider, code, state)
 		if err != nil {
 			return 0, "", nil, err
@@ -126,12 +108,4 @@ func (ah *AuthHandler) getProvider(ctx *gin.Context) (string, error) {
 		return "", ungerr.BadRequestError("missing oauth provider")
 	}
 	return provider, nil
-}
-
-func generateStateToken() (string, error) {
-	b := make([]byte, 32)
-	if _, err := rand.Read(b); err != nil {
-		return "", eris.Wrap(err, "error generating random string")
-	}
-	return base64.URLEncoding.EncodeToString(b), nil
 }

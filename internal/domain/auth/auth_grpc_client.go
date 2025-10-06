@@ -17,7 +17,7 @@ type AuthClient interface {
 	InternalLogin(ctx context.Context, req InternalLoginRequest) (LoginResponse, error)
 	OAuth2Login(ctx context.Context, req OAuthLoginRequest) (LoginResponse, error)
 	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
-	GetOAuth2URL(ctx context.Context, provider, state string) (string, error)
+	GetOAuth2URL(ctx context.Context, provider string) (string, error)
 }
 
 type authClient struct {
@@ -121,18 +121,12 @@ func (ac *authClient) VerifyToken(ctx context.Context, token string) (bool, map[
 	}, nil
 }
 
-func (ac *authClient) GetOAuth2URL(ctx context.Context, provider, state string) (string, error) {
+func (ac *authClient) GetOAuth2URL(ctx context.Context, provider string) (string, error) {
 	if provider == "" {
 		return "", ungerr.BadRequestError("provider is empty")
 	}
-	if state == "" {
-		return "", ungerr.BadRequestError("state is empty")
-	}
 
-	request := auth.GetOAuth2UrlRequest{
-		Provider: provider,
-		State:    state,
-	}
+	request := auth.GetOAuth2UrlRequest{Provider: provider}
 	response, err := ac.client.GetOAuth2Url(ctx, &request)
 	if err != nil {
 		return "", err
