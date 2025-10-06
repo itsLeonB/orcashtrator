@@ -6,9 +6,15 @@ type RegisterRequest struct {
 	PasswordConfirmation string `validate:"required"`
 }
 
-type LoginRequest struct {
+type InternalLoginRequest struct {
 	Email    string `validate:"required,email,min=3"`
 	Password string `validate:"required"`
+}
+
+type OAuthLoginRequest struct {
+	Provider string `validate:"required,min=1"`
+	Code     string `validate:"required,min=1"`
+	State    string `validate:"required,min=1"`
 }
 
 type LoginResponse struct {

@@ -6,7 +6,7 @@ type RegisterRequest struct {
 	PasswordConfirmation string `json:"passwordConfirmation" binding:"required"`
 }
 
-type LoginRequest struct {
+type InternalLoginRequest struct {
 	Email    string `json:"email" binding:"required,email,min=3"`
 	Password string `json:"password" binding:"required"`
 }

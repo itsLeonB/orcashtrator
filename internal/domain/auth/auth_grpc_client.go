@@ -14,8 +14,10 @@ import (
 
 type AuthClient interface {
 	Register(ctx context.Context, req RegisterRequest) error
-	Login(ctx context.Context, req LoginRequest) (LoginResponse, error)
+	InternalLogin(ctx context.Context, req InternalLoginRequest) (LoginResponse, error)
+	OAuth2Login(ctx context.Context, req OAuthLoginRequest) (LoginResponse, error)
 	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
+	GetOAuth2URL(ctx context.Context, provider, state string) (string, error)
 }
 
 type authClient struct {
@@ -52,14 +54,40 @@ func (ac *authClient) Register(ctx context.Context, req RegisterRequest) error {
 	return nil
 }
 
-func (ac *authClient) Login(ctx context.Context, req LoginRequest) (LoginResponse, error) {
+func (ac *authClient) InternalLogin(ctx context.Context, req InternalLoginRequest) (LoginResponse, error) {
 	if err := ac.validate.Struct(req); err != nil {
 		return LoginResponse{}, err
 	}
 
 	request := auth.LoginRequest{
-		Email:    req.Email,
-		Password: req.Password,
+		InternalRequest: &auth.InternalLoginRequest{
+			Email:    req.Email,
+			Password: req.Password,
+		},
+	}
+
+	response, err := ac.client.Login(ctx, &request)
+	if err != nil {
+		return LoginResponse{}, err
+	}
+
+	return LoginResponse{
+		Type:  response.GetType(),
+		Token: response.GetToken(),
+	}, nil
+}
+
+func (ac *authClient) OAuth2Login(ctx context.Context, req OAuthLoginRequest) (LoginResponse, error) {
+	if err := ac.validate.Struct(req); err != nil {
+		return LoginResponse{}, err
+	}
+
+	request := auth.LoginRequest{
+		Oauth2Request: &auth.OAuth2LoginRequest{
+			Provider: req.Provider,
+			Code:     req.Code,
+			State:    req.State,
+		},
 	}
 
 	response, err := ac.client.Login(ctx, &request)
@@ -91,4 +119,24 @@ func (ac *authClient) VerifyToken(ctx context.Context, token string) (bool, map[
 	return true, map[string]any{
 		appconstant.ContextProfileID.String(): data.GetProfileId(),
 	}, nil
+}
+
+func (ac *authClient) GetOAuth2URL(ctx context.Context, provider, state string) (string, error) {
+	if provider == "" {
+		return "", ungerr.BadRequestError("provider is empty")
+	}
+	if state == "" {
+		return "", ungerr.BadRequestError("state is empty")
+	}
+
+	request := auth.GetOAuth2UrlRequest{
+		Provider: provider,
+		State:    state,
+	}
+	response, err := ac.client.GetOAuth2Url(ctx, &request)
+	if err != nil {
+		return "", err
+	}
+
+	return response.GetUrl(), nil
 }
