@@ -60,9 +60,11 @@ func (ac *authClient) InternalLogin(ctx context.Context, req InternalLoginReques
 	}
 
 	request := auth.LoginRequest{
-		InternalRequest: &auth.InternalLoginRequest{
-			Email:    req.Email,
-			Password: req.Password,
+		LoginMethod: &auth.LoginRequest_InternalRequest{
+			InternalRequest: &auth.InternalLoginRequest{
+				Email:    req.Email,
+				Password: req.Password,
+			},
 		},
 	}
 
@@ -83,10 +85,12 @@ func (ac *authClient) OAuth2Login(ctx context.Context, req OAuthLoginRequest) (L
 	}
 
 	request := auth.LoginRequest{
-		Oauth2Request: &auth.OAuth2LoginRequest{
-			Provider: req.Provider,
-			Code:     req.Code,
-			State:    req.State,
+		LoginMethod: &auth.LoginRequest_Oauth2Request{
+			Oauth2Request: &auth.OAuth2LoginRequest{
+				Provider: req.Provider,
+				Code:     req.Code,
+				State:    req.State,
+			},
 		},
 	}
 
