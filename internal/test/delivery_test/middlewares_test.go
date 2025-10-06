@@ -21,7 +21,7 @@ func (m *MockAuthService) Register(ctx context.Context, request dto.RegisterRequ
 	return args.Error(0)
 }
 
-func (m *MockAuthService) Login(ctx context.Context, request dto.LoginRequest) (dto.LoginResponse, error) {
+func (m *MockAuthService) Login(ctx context.Context, request dto.InternalLoginRequest) (dto.LoginResponse, error) {
 	args := m.Called(ctx, request)
 	return args.Get(0).(dto.LoginResponse), args.Error(1)
 }

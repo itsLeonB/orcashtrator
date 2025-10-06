@@ -23,7 +23,9 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 
 	authRoutes := v1.Group("/auth")
 	authRoutes.POST("/register", handlers.Auth.HandleRegister())
-	authRoutes.POST("/login", handlers.Auth.HandleLogin())
+	authRoutes.POST("/login", handlers.Auth.HandleInternalLogin())
+	authRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextProvider), handlers.Auth.HandleOAuth2Login())
+	authRoutes.GET(fmt.Sprintf("/:%s/callback", appconstant.ContextProvider), handlers.Auth.HandleOAuth2Callback())
 
 	protectedRoutes := v1.Group("/", middlewares.auth)
 

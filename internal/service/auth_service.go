@@ -35,13 +35,13 @@ func (as *authServiceGrpc) Register(ctx context.Context, req dto.RegisterRequest
 	return nil
 }
 
-func (as *authServiceGrpc) Login(ctx context.Context, req dto.LoginRequest) (dto.LoginResponse, error) {
-	request := auth.LoginRequest{
+func (as *authServiceGrpc) InternalLogin(ctx context.Context, req dto.InternalLoginRequest) (dto.LoginResponse, error) {
+	request := auth.InternalLoginRequest{
 		Email:    req.Email,
 		Password: req.Password,
 	}
 
-	response, err := as.authClient.Login(ctx, request)
+	response, err := as.authClient.InternalLogin(ctx, request)
 	if err != nil {
 		return dto.LoginResponse{}, eris.Wrap(err, appconstant.ErrServiceClient)
 	}
@@ -54,4 +54,25 @@ func (as *authServiceGrpc) Login(ctx context.Context, req dto.LoginRequest) (dto
 
 func (as *authServiceGrpc) VerifyToken(ctx context.Context, token string) (bool, map[string]any, error) {
 	return as.authClient.VerifyToken(ctx, token)
+}
+
+func (as *authServiceGrpc) GetOAuth2URL(ctx context.Context, provider string) (string, error) {
+	return as.authClient.GetOAuth2URL(ctx, provider)
+}
+func (as *authServiceGrpc) OAuth2Login(ctx context.Context, provider, code, state string) (dto.LoginResponse, error) {
+	request := auth.OAuthLoginRequest{
+		Provider: provider,
+		Code:     code,
+		State:    state,
+	}
+
+	response, err := as.authClient.OAuth2Login(ctx, request)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
+	return dto.LoginResponse{
+		Type:  response.Type,
+		Token: response.Token,
+	}, nil
 }

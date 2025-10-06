@@ -10,8 +10,10 @@ import (
 
 type AuthService interface {
 	Register(ctx context.Context, request dto.RegisterRequest) error
-	Login(ctx context.Context, request dto.LoginRequest) (dto.LoginResponse, error)
+	InternalLogin(ctx context.Context, request dto.InternalLoginRequest) (dto.LoginResponse, error)
 	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
+	GetOAuth2URL(ctx context.Context, provider string) (string, error)
+	OAuth2Login(ctx context.Context, provider, code, state string) (dto.LoginResponse, error)
 }
 
 type ProfileService interface {
