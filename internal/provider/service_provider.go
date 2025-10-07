@@ -23,7 +23,7 @@ type Services struct {
 func ProvideServices(
 	clients *Clients,
 	logger ezutil.Logger,
-	cfg config.Storage,
+	cfg config.Config,
 	queues *Queues,
 ) (*Services, error) {
 	if clients == nil {
@@ -36,7 +36,7 @@ func ProvideServices(
 		return nil, eris.New("queue cannot be nil")
 	}
 
-	authService := service.NewAuthService(clients.Auth)
+	authService := service.NewAuthService(clients.Auth, cfg.RegisterVerificationUrl)
 
 	profileService := service.NewProfileService(clients.Profile)
 

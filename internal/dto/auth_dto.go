@@ -15,3 +15,7 @@ type LoginResponse struct {
 	Type  string `json:"type"`
 	Token string `json:"token"`
 }
+
+type RegisterResponse struct {
+	Message string `json:"message"`
+}

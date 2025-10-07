@@ -5,8 +5,7 @@ const (
 	MsgInsertData = "success inserting new data"
 	MsgUpdateData = "success updating data"
 
-	MsgRegisterSuccess = "success registering, please login"
-	MsgLoginSuccess    = "success login"
+	MsgLoginSuccess = "success login"
 
 	MsgBillUploaded = "bill uploaded"
 )
