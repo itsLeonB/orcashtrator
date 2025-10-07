@@ -24,7 +24,7 @@ func All(configs config.Config) (*Provider, error) {
 	if err != nil {
 		return nil, err
 	}
-	services, err := ProvideServices(clients, logger, configs.Storage, queues)
+	services, err := ProvideServices(clients, logger, configs, queues)
 	if err != nil {
 		return nil, err
 	}

@@ -32,7 +32,7 @@ func (ah *AuthHandler) HandleRegister() gin.HandlerFunc {
 			return
 		}
 
-		err = ah.authService.Register(ctx, request)
+		response, err := ah.authService.Register(ctx, request)
 		if err != nil {
 			_ = ctx.Error(err)
 			return
@@ -40,7 +40,7 @@ func (ah *AuthHandler) HandleRegister() gin.HandlerFunc {
 
 		ctx.JSON(
 			http.StatusCreated,
-			ginkgo.NewResponse(appconstant.MsgRegisterSuccess),
+			ginkgo.NewResponse("success registering").WithData(response),
 		)
 	}
 }
@@ -99,6 +99,22 @@ func (ah *AuthHandler) HandleOAuth2Callback() gin.HandlerFunc {
 		}
 
 		return http.StatusOK, "success logging in", response, nil
+	})
+}
+
+func (ah *AuthHandler) HandleVerifyRegistration() gin.HandlerFunc {
+	return ginkgo.WrapHandler(func(ctx *gin.Context) (int, string, any, error) {
+		token := ctx.Query("token")
+		if token == "" {
+			return 0, "", nil, ungerr.BadRequestError("missing token")
+		}
+
+		response, err := ah.authService.VerifyRegistration(ctx, token)
+		if err != nil {
+			return 0, "", nil, err
+		}
+
+		return http.StatusOK, "registration verified", response, nil
 	})
 }
 

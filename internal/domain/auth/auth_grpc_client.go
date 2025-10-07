@@ -13,11 +13,12 @@ import (
 )
 
 type AuthClient interface {
-	Register(ctx context.Context, req RegisterRequest) error
+	Register(ctx context.Context, req RegisterRequest) (bool, error)
 	InternalLogin(ctx context.Context, req InternalLoginRequest) (LoginResponse, error)
 	OAuth2Login(ctx context.Context, req OAuthLoginRequest) (LoginResponse, error)
 	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
 	GetOAuth2URL(ctx context.Context, provider string) (string, error)
+	VerifyRegistration(ctx context.Context, token string) (LoginResponse, error)
 }
 
 type authClient struct {
@@ -36,22 +37,24 @@ func NewAuthClient(validate *validator.Validate, conn *grpc.ClientConn) AuthClie
 	}
 }
 
-func (ac *authClient) Register(ctx context.Context, req RegisterRequest) error {
+func (ac *authClient) Register(ctx context.Context, req RegisterRequest) (bool, error) {
 	if err := ac.validate.Struct(req); err != nil {
-		return err
+		return false, err
 	}
 
 	request := &auth.RegisterRequest{
 		Email:                req.Email,
 		Password:             req.Password,
 		PasswordConfirmation: req.PasswordConfirmation,
+		VerificationUrl:      req.VerificationURL,
 	}
 
-	if _, err := ac.client.Register(ctx, request); err != nil {
-		return err
+	response, err := ac.client.Register(ctx, request)
+	if err != nil {
+		return false, err
 	}
 
-	return nil
+	return response.GetIsVerified(), nil
 }
 
 func (ac *authClient) InternalLogin(ctx context.Context, req InternalLoginRequest) (LoginResponse, error) {
@@ -137,4 +140,22 @@ func (ac *authClient) GetOAuth2URL(ctx context.Context, provider string) (string
 	}
 
 	return response.GetUrl(), nil
+}
+
+func (ac *authClient) VerifyRegistration(ctx context.Context, token string) (LoginResponse, error) {
+	if token == "" {
+		return LoginResponse{}, ungerr.BadRequestError("token is empty")
+	}
+
+	request := auth.VerifyRegistrationRequest{Token: token}
+
+	response, err := ac.client.VerifyRegistration(ctx, &request)
+	if err != nil {
+		return LoginResponse{}, err
+	}
+
+	return LoginResponse{
+		Type:  response.GetType(),
+		Token: response.GetToken(),
+	}, nil
 }
