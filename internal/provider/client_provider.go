@@ -18,6 +18,7 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/domain/otherfee"
 	"github.com/itsLeonB/orcashtrator/internal/domain/profile"
 	"google.golang.org/grpc"
+	"google.golang.org/grpc/backoff"
 	"google.golang.org/grpc/credentials/insecure"
 	"google.golang.org/grpc/keepalive"
 )
@@ -36,33 +37,30 @@ type Clients struct {
 	ImageUpload    imageupload.ImageUploadClient
 }
 
-func ProvideClients(configs config.ServiceClient, validate *validator.Validate, logger ezutil.Logger) *Clients {
+func ProvideClients(configs config.Config, validate *validator.Validate, logger ezutil.Logger) *Clients {
 	conns := make([]*grpc.ClientConn, 0, 3)
 
-	billsplittrConn, err := grpc.NewClient(
-		configs.BillsplittrHost,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	defaultTransportCreds := grpc.WithTransportCredentials(insecure.NewCredentials())
+	defaultConnectParams := grpc.WithConnectParams(grpc.ConnectParams{
+		Backoff:           backoff.DefaultConfig,
+		MinConnectTimeout: configs.Timeout,
+	})
+
+	billsplittrConn, err := grpc.NewClient(configs.BillsplittrHost, defaultTransportCreds, defaultConnectParams)
 	if err != nil {
 		logger.Warnf("error connecting to billsplittr client: %v", err)
 	} else {
 		conns = append(conns, billsplittrConn)
 	}
 
-	cocoonConn, err := grpc.NewClient(
-		configs.CocoonHost,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	cocoonConn, err := grpc.NewClient(configs.CocoonHost, defaultTransportCreds, defaultConnectParams)
 	if err != nil {
 		logger.Warnf("error connecting to cocoon client: %v", err)
 	} else {
 		conns = append(conns, cocoonConn)
 	}
 
-	drexConn, err := grpc.NewClient(
-		configs.DrexHost,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
-	)
+	drexConn, err := grpc.NewClient(configs.DrexHost, defaultTransportCreds, defaultConnectParams)
 	if err != nil {
 		logger.Warnf("error connecting to drex client: %v", err)
 	} else {
@@ -71,7 +69,8 @@ func ProvideClients(configs config.ServiceClient, validate *validator.Validate, 
 
 	stortrConn, err := grpc.NewClient(
 		configs.StortrHost,
-		grpc.WithTransportCredentials(insecure.NewCredentials()),
+		defaultTransportCreds,
+		defaultConnectParams,
 		grpc.WithKeepaliveParams(keepalive.ClientParameters{
 			Time:                10 * time.Second,
 			Timeout:             5 * time.Second,

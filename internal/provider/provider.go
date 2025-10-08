@@ -19,7 +19,7 @@ type Provider struct {
 func All(configs config.Config) (*Provider, error) {
 	logger := ProvideLogger(configs.Env)
 	db := meq.NewAsynqDB(logger, configs.ToRedisOpts())
-	clients := ProvideClients(configs.ServiceClient, validator.New(), logger)
+	clients := ProvideClients(configs, validator.New(), logger)
 	queues, err := ProvideQueues(logger, db)
 	if err != nil {
 		return nil, err
