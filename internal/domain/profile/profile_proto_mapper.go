@@ -36,6 +36,7 @@ func fromProfileProto(p *profile.ProfileResponse) (Profile, error) {
 		UserID:    userID,
 		Name:      profile.GetName(),
 		Avatar:    profile.GetAvatar(),
+		Email:     profile.GetEmail(),
 		CreatedAt: ezutil.FromProtoTime(amp.GetCreatedAt()),
 		UpdatedAt: ezutil.FromProtoTime(amp.GetUpdatedAt()),
 		DeletedAt: ezutil.FromProtoTime(amp.GetDeletedAt()),
