@@ -12,6 +12,7 @@ func ProfileToResponse(response profile.Profile) dto.ProfileResponse {
 		UserID:      response.UserID,
 		Name:        response.Name,
 		Avatar:      response.Avatar,
+		Email:       response.Email,
 		CreatedAt:   response.CreatedAt,
 		UpdatedAt:   response.UpdatedAt,
 		DeletedAt:   response.DeletedAt,

@@ -11,6 +11,7 @@ type ProfileResponse struct {
 	UserID      uuid.UUID `json:"userId"`
 	Name        string    `json:"name"`
 	Avatar      string    `json:"avatar"`
+	Email       string    `json:"email"`
 	CreatedAt   time.Time `json:"createdAt"`
 	UpdatedAt   time.Time `json:"updatedAt"`
 	DeletedAt   time.Time `json:"deletedAt,omitzero"`
