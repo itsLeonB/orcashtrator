@@ -19,3 +19,13 @@ type LoginResponse struct {
 type RegisterResponse struct {
 	Message string `json:"message"`
 }
+
+type SendPasswordResetRequest struct {
+	Email string `json:"email" binding:"required,email,min=3"`
+}
+
+type ResetPasswordRequest struct {
+	Token                string `json:"token" binding:"required,min=3"`
+	Password             string `json:"password" binding:"required,eqfield=PasswordConfirmation"`
+	PasswordConfirmation string `json:"passwordConfirmation" binding:"required"`
+}

@@ -118,6 +118,37 @@ func (ah *AuthHandler) HandleVerifyRegistration() gin.HandlerFunc {
 	})
 }
 
+func (ah *AuthHandler) HandleSendPasswordReset() gin.HandlerFunc {
+	return ginkgo.WrapHandler(func(ctx *gin.Context) (int, string, any, error) {
+		request, err := ginkgo.BindRequest[dto.SendPasswordResetRequest](ctx, binding.JSON)
+		if err != nil {
+			return 0, "", nil, err
+		}
+
+		if err = ah.authService.SendPasswordReset(ctx, request.Email); err != nil {
+			return 0, "", nil, err
+		}
+
+		return http.StatusCreated, "reset password link sent to email", nil, nil
+	})
+}
+
+func (ah *AuthHandler) HandleResetPassword() gin.HandlerFunc {
+	return ginkgo.WrapHandler(func(ctx *gin.Context) (int, string, any, error) {
+		request, err := ginkgo.BindRequest[dto.ResetPasswordRequest](ctx, binding.JSON)
+		if err != nil {
+			return 0, "", nil, err
+		}
+
+		response, err := ah.authService.ResetPassword(ctx, request.Token, request.Password)
+		if err != nil {
+			return 0, "", nil, err
+		}
+
+		return http.StatusOK, "password successfully reset", response, nil
+	})
+}
+
 func (ah *AuthHandler) getProvider(ctx *gin.Context) (string, error) {
 	provider := ctx.Param(appconstant.ContextProvider.String())
 	if provider == "" {
