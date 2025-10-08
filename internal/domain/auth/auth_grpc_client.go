@@ -19,6 +19,8 @@ type AuthClient interface {
 	VerifyToken(ctx context.Context, token string) (bool, map[string]any, error)
 	GetOAuth2URL(ctx context.Context, provider string) (string, error)
 	VerifyRegistration(ctx context.Context, token string) (LoginResponse, error)
+	SendPasswordReset(ctx context.Context, resetURL, email string) error
+	ResetPassword(ctx context.Context, token, newPassword string) (LoginResponse, error)
 }
 
 type authClient struct {
@@ -102,10 +104,7 @@ func (ac *authClient) OAuth2Login(ctx context.Context, req OAuthLoginRequest) (L
 		return LoginResponse{}, err
 	}
 
-	return LoginResponse{
-		Type:  response.GetType(),
-		Token: response.GetToken(),
-	}, nil
+	return fromLoginResponseProto(response), nil
 }
 
 func (ac *authClient) VerifyToken(ctx context.Context, token string) (bool, map[string]any, error) {
@@ -154,8 +153,43 @@ func (ac *authClient) VerifyRegistration(ctx context.Context, token string) (Log
 		return LoginResponse{}, err
 	}
 
-	return LoginResponse{
-		Type:  response.GetType(),
-		Token: response.GetToken(),
-	}, nil
+	return fromLoginResponseProto(response), nil
+}
+
+func (ac *authClient) SendPasswordReset(ctx context.Context, resetURL, email string) error {
+	if resetURL == "" {
+		return ungerr.BadRequestError("reset url is empty")
+	}
+	if email == "" {
+		return ungerr.BadRequestError("email is empty")
+	}
+
+	request := auth.SendResetPasswordRequest{
+		ResetUrl: resetURL,
+		Email:    email,
+	}
+
+	_, err := ac.client.SendResetPassword(ctx, &request)
+	return err
+}
+
+func (ac *authClient) ResetPassword(ctx context.Context, token, newPassword string) (LoginResponse, error) {
+	if token == "" {
+		return LoginResponse{}, ungerr.BadRequestError("token is empty")
+	}
+	if newPassword == "" {
+		return LoginResponse{}, ungerr.BadRequestError("new password is empty")
+	}
+
+	request := auth.ResetPasswordRequest{
+		Token:       token,
+		NewPassword: newPassword,
+	}
+
+	response, err := ac.client.ResetPassword(ctx, &request)
+	if err != nil {
+		return LoginResponse{}, err
+	}
+
+	return fromLoginResponseProto(response), nil
 }

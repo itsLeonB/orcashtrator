@@ -36,7 +36,7 @@ func ProvideServices(
 		return nil, eris.New("queue cannot be nil")
 	}
 
-	authService := service.NewAuthService(clients.Auth, cfg.RegisterVerificationUrl)
+	authService := service.NewAuthService(clients.Auth, cfg.RegisterVerificationUrl, cfg.ResetPasswordUrl)
 
 	profileService := service.NewProfileService(clients.Profile)
 

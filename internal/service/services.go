@@ -15,6 +15,8 @@ type AuthService interface {
 	GetOAuth2URL(ctx context.Context, provider string) (string, error)
 	OAuth2Login(ctx context.Context, provider, code, state string) (dto.LoginResponse, error)
 	VerifyRegistration(ctx context.Context, token string) (dto.LoginResponse, error)
+	SendPasswordReset(ctx context.Context, email string) error
+	ResetPassword(ctx context.Context, token, newPassword string) (dto.LoginResponse, error)
 }
 
 type ProfileService interface {

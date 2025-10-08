@@ -10,4 +10,5 @@ type App struct {
 	Timeout                 time.Duration `default:"10s"`
 	ClientUrls              []string      `split_words:"true"`
 	RegisterVerificationUrl string        `split_words:"true" required:"true"`
+	ResetPasswordUrl        string        `split_words:"true" required:"true"`
 }

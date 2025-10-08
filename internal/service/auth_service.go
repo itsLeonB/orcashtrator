@@ -6,21 +6,25 @@ import (
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/domain/auth"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
+	"github.com/itsLeonB/orcashtrator/internal/mapper"
 	"github.com/rotisserie/eris"
 )
 
 type authServiceGrpc struct {
-	authClient      auth.AuthClient
-	verificationURL string
+	authClient       auth.AuthClient
+	verificationURL  string
+	resetPasswordURL string
 }
 
 func NewAuthService(
 	authClient auth.AuthClient,
 	verificationURL string,
+	resetPasswordURL string,
 ) AuthService {
 	return &authServiceGrpc{
 		authClient,
 		verificationURL,
+		resetPasswordURL,
 	}
 }
 
@@ -58,10 +62,7 @@ func (as *authServiceGrpc) InternalLogin(ctx context.Context, req dto.InternalLo
 		return dto.LoginResponse{}, eris.Wrap(err, appconstant.ErrServiceClient)
 	}
 
-	return dto.LoginResponse{
-		Type:  response.Type,
-		Token: response.Token,
-	}, nil
+	return mapper.LoginToResponse(response), nil
 }
 
 func (as *authServiceGrpc) VerifyToken(ctx context.Context, token string) (bool, map[string]any, error) {
@@ -84,10 +85,7 @@ func (as *authServiceGrpc) OAuth2Login(ctx context.Context, provider, code, stat
 		return dto.LoginResponse{}, err
 	}
 
-	return dto.LoginResponse{
-		Type:  response.Type,
-		Token: response.Token,
-	}, nil
+	return mapper.LoginToResponse(response), nil
 }
 
 func (as *authServiceGrpc) VerifyRegistration(ctx context.Context, token string) (dto.LoginResponse, error) {
@@ -95,9 +93,18 @@ func (as *authServiceGrpc) VerifyRegistration(ctx context.Context, token string)
 	if err != nil {
 		return dto.LoginResponse{}, err
 	}
+	return mapper.LoginToResponse(response), nil
+}
 
-	return dto.LoginResponse{
-		Type:  response.Type,
-		Token: response.Token,
-	}, nil
+func (as *authServiceGrpc) SendPasswordReset(ctx context.Context, email string) error {
+	return as.authClient.SendPasswordReset(ctx, as.resetPasswordURL, email)
+}
+
+func (as *authServiceGrpc) ResetPassword(ctx context.Context, token, newPassword string) (dto.LoginResponse, error) {
+	response, err := as.authClient.ResetPassword(ctx, token, newPassword)
+	if err != nil {
+		return dto.LoginResponse{}, err
+	}
+
+	return mapper.LoginToResponse(response), nil
 }
