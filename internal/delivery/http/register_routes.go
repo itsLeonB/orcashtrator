@@ -36,10 +36,21 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 	profileRoutes.GET("", handlers.Profile.HandleProfile())
 	profileRoutes.PATCH("", handlers.Profile.HandleUpdate())
 
+	protectedRoutes.GET("/profiles", handlers.Profile.HandleSearch())
+	protectedRoutes.POST(fmt.Sprintf("/profiles/:%s/friend-requests", appconstant.ContextProfileID.String()), handlers.FriendshipRequest.HandleSend())
+
 	friendshipRoutes := protectedRoutes.Group("/friendships")
 	friendshipRoutes.POST("", handlers.Friendship.HandleCreateAnonymousFriendship())
 	friendshipRoutes.GET("", handlers.Friendship.HandleGetAll())
 	friendshipRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextFriendshipID), handlers.Friendship.HandleGetDetails())
+
+	receivedFriendRequestRoute := fmt.Sprintf("/%s/:%s", appconstant.ReceivedFriendRequest, appconstant.ContextFriendRequestID)
+	friendRequestRoutes := protectedRoutes.Group("/friend-requests")
+	friendRequestRoutes.GET(fmt.Sprintf("/:%s", appconstant.PathFriendRequestType), handlers.FriendshipRequest.HandleGetAll())
+	friendRequestRoutes.DELETE(fmt.Sprintf("/%s/:%s", appconstant.SentFriendRequest, appconstant.ContextFriendRequestID), handlers.FriendshipRequest.HandleCancel())
+	friendRequestRoutes.DELETE(receivedFriendRequestRoute, handlers.FriendshipRequest.HandleIgnore())
+	friendRequestRoutes.PATCH(receivedFriendRequestRoute, handlers.FriendshipRequest.HandleBlock())
+	friendRequestRoutes.POST(receivedFriendRequestRoute, handlers.FriendshipRequest.HandleAccept())
 
 	protectedRoutes.GET("/transfer-methods", handlers.TransferMethod.HandleGetAll())
 
@@ -52,11 +63,12 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 	groupExpenseRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextGroupExpenseID), handlers.GroupExpense.HandleGetDetails())
 	groupExpenseRoutes.PATCH(fmt.Sprintf("/:%s/confirmed", appconstant.ContextGroupExpenseID), handlers.GroupExpense.HandleConfirmDraft())
 
+	expenseItemRoute := fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID)
 	expenseItemRoutes := groupExpenseRoutes.Group(fmt.Sprintf("/:%s/items", appconstant.ContextGroupExpenseID))
 	expenseItemRoutes.POST("", handlers.ExpenseItem.HandleAdd())
-	expenseItemRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID), handlers.ExpenseItem.HandleGetDetails())
-	expenseItemRoutes.PUT(fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID), handlers.ExpenseItem.HandleUpdate())
-	expenseItemRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID), handlers.ExpenseItem.HandleRemove())
+	expenseItemRoutes.GET(expenseItemRoute, handlers.ExpenseItem.HandleGetDetails())
+	expenseItemRoutes.PUT(expenseItemRoute, handlers.ExpenseItem.HandleUpdate())
+	expenseItemRoutes.DELETE(expenseItemRoute, handlers.ExpenseItem.HandleRemove())
 
 	otherFeeRoutes := groupExpenseRoutes.Group(fmt.Sprintf("/:%s/fees", appconstant.ContextGroupExpenseID))
 	otherFeeRoutes.POST("", handlers.OtherFee.HandleAdd())
