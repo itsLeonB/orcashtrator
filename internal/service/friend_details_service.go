@@ -80,10 +80,25 @@ func (fds *friendDetailsServiceImpl) GetDetails(ctx context.Context, profileID, 
 		}, nil
 	}
 
+	userProfile, err := fds.profileSvc.GetByID(ctx, profileID)
+	if err != nil {
+		return dto.FriendDetailsResponse{}, err
+	}
+
+	transactions := make([]dto.DebtTransactionResponse, 0)
+	for _, anonProfileID := range userProfile.AssociatedAnonProfileIDs {
+		anonTransactions, err := fds.debtSvc.GetAllByProfileIDs(ctx, anonProfileID, friendProfileID)
+		if err != nil {
+			return dto.FriendDetailsResponse{}, err
+		}
+
+		transactions = append(transactions, anonTransactions...)
+	}
+
 	debtTransactions, err := fds.debtSvc.GetAllByProfileIDs(ctx, profileID, friendProfileID)
 	if err != nil {
 		return dto.FriendDetailsResponse{}, err
 	}
 
-	return mapper.MapToFriendDetailsResponse(profileID, response, debtTransactions)
+	return mapper.MapToFriendDetailsResponse(profileID, response, append(transactions, debtTransactions...))
 }
