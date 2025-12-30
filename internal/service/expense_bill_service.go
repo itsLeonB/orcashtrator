@@ -69,6 +69,15 @@ func (ebs *expenseBillServiceImpl) Save(ctx context.Context, req *dto.NewExpense
 	return mapper.ExpenseBillToResponse(savedBill, "", req.CreatorProfileID, namesByProfileIDs), nil
 }
 
+func (ebs *expenseBillServiceImpl) SaveV2(ctx context.Context, req *dto.NewExpenseBillRequest) (dto.ExpenseBillResponse, error) {
+	savedBill, err := ebs.uploadAndSave(ctx, req)
+	if err != nil {
+		return dto.ExpenseBillResponse{}, err
+	}
+
+	return mapper.ExpenseBillToResponse(savedBill, "", req.CreatorProfileID, make(map[uuid.UUID]string)), nil
+}
+
 func (ebs *expenseBillServiceImpl) GetAllCreated(ctx context.Context, creatorProfileID uuid.UUID) ([]dto.ExpenseBillResponse, error) {
 	bills, err := ebs.expenseBillClient.GetAllCreated(ctx, creatorProfileID)
 	if err != nil {
@@ -101,6 +110,15 @@ func (ebs *expenseBillServiceImpl) Get(ctx context.Context, profileID, id uuid.U
 	}
 
 	return mapper.ExpenseBillToResponse(bill, imageURL, profileID, namesByProfileIDs), nil
+}
+
+func (ebs *expenseBillServiceImpl) MapToURL(ctx context.Context, bill expensebill.ExpenseBill) (dto.ExpenseBillResponse, error) {
+	imageURL, err := ebs.imageUploadClient.GetURL(ctx, ebs.objectKeyToFileID(bill.ObjectKey))
+	if err != nil {
+		return dto.ExpenseBillResponse{}, err
+	}
+
+	return mapper.ExpenseBillToResponse(bill, imageURL, uuid.Nil, make(map[uuid.UUID]string)), nil
 }
 
 func (ebs *expenseBillServiceImpl) Delete(ctx context.Context, profileID, id uuid.UUID) error {
@@ -204,6 +222,7 @@ func (ebs *expenseBillServiceImpl) saveEntry(
 	request := expensebill.ExpenseBill{
 		CreatorProfileID: req.CreatorProfileID,
 		PayerProfileID:   req.PayerProfileID,
+		GroupExpenseID:   req.GroupExpenseID,
 		ObjectKey:        objectKey,
 	}
 

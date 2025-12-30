@@ -5,6 +5,9 @@ import (
 	"time"
 
 	"github.com/go-playground/validator/v10"
+	itemV1 "github.com/itsLeonB/billsplittr-protos/gen/go/expenseitem/v1"
+	expenseV1 "github.com/itsLeonB/billsplittr-protos/gen/go/groupexpense/v1"
+	expenseV2 "github.com/itsLeonB/billsplittr-protos/gen/go/groupexpense/v2"
 	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/config"
@@ -36,6 +39,9 @@ type Clients struct {
 	OtherFee          otherfee.OtherFeeClient
 	ExpenseBill       expensebill.ExpenseBillClient
 	ImageUpload       imageupload.ImageUploadClient
+	ExpenseV1         expenseV1.GroupExpenseServiceClient
+	ExpenseV2         expenseV2.GroupExpenseServiceClient
+	ItemV1            itemV1.ExpenseItemServiceClient
 }
 
 func ProvideClients(configs config.Config, validate *validator.Validate, logger ezutil.Logger) *Clients {
@@ -101,6 +107,9 @@ func ProvideClients(configs config.Config, validate *validator.Validate, logger 
 		otherfee.NewOtherFeeClient(validate, billsplittrConn),
 		expensebill.NewExpenseBillClient(validate, billsplittrConn),
 		imageupload.NewImageUploadClient(validate, stortrConn),
+		expenseV1.NewGroupExpenseServiceClient(billsplittrConn),
+		expenseV2.NewGroupExpenseServiceClient(billsplittrConn),
+		itemV1.NewExpenseItemServiceClient(billsplittrConn),
 	}
 }
 

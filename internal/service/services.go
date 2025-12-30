@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	"github.com/itsLeonB/orcashtrator/internal/appconstant"
+	"github.com/itsLeonB/orcashtrator/internal/domain/expensebill"
 	"github.com/itsLeonB/orcashtrator/internal/domain/groupexpense"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
 )
@@ -25,6 +27,7 @@ type ProfileService interface {
 	Update(ctx context.Context, id uuid.UUID, name string) (dto.ProfileResponse, error)
 	Search(ctx context.Context, profileID uuid.UUID, input string) ([]dto.ProfileResponse, error)
 	Associate(ctx context.Context, userProfileID, realProfileID, anonProfileID uuid.UUID) error
+	GetByIDs(ctx context.Context, ids []uuid.UUID) (map[uuid.UUID]dto.ProfileResponse, error)
 }
 
 type FriendshipService interface {
@@ -61,9 +64,12 @@ type TransferMethodService interface {
 
 type GroupExpenseService interface {
 	CreateDraft(ctx context.Context, request dto.NewGroupExpenseRequest) (dto.GroupExpenseResponse, error)
-	GetAllCreated(ctx context.Context, userProfileID uuid.UUID) ([]dto.GroupExpenseResponse, error)
+	GetAllCreated(ctx context.Context, userProfileID uuid.UUID, status appconstant.ExpenseStatus) ([]dto.GroupExpenseResponse, error)
 	GetDetails(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
-	ConfirmDraft(ctx context.Context, id, userProfileID uuid.UUID) (dto.GroupExpenseResponse, error)
+	ConfirmDraft(ctx context.Context, id, userProfileID uuid.UUID, dryRun bool) (dto.GroupExpenseResponse, error)
+	CreateDraftV2(ctx context.Context, userProfileID uuid.UUID, description string) (dto.ExpenseResponseV2, error)
+	Delete(ctx context.Context, userProfileID, id uuid.UUID) error
+	SyncParticipants(ctx context.Context, req dto.ExpenseParticipantsRequest) error
 }
 
 type ExpenseItemService interface {
@@ -71,6 +77,7 @@ type ExpenseItemService interface {
 	GetDetails(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) (dto.ExpenseItemResponse, error)
 	Update(ctx context.Context, request dto.UpdateExpenseItemRequest) (dto.ExpenseItemResponse, error)
 	Remove(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) error
+	SyncParticipants(ctx context.Context, req dto.SyncItemParticipantsRequest) error
 }
 
 type OtherFeeService interface {
@@ -85,4 +92,6 @@ type ExpenseBillService interface {
 	GetAllCreated(ctx context.Context, creatorProfileID uuid.UUID) ([]dto.ExpenseBillResponse, error)
 	Get(ctx context.Context, profileID, id uuid.UUID) (dto.ExpenseBillResponse, error)
 	Delete(ctx context.Context, profileID, id uuid.UUID) error
+	SaveV2(ctx context.Context, req *dto.NewExpenseBillRequest) (dto.ExpenseBillResponse, error)
+	MapToURL(ctx context.Context, bill expensebill.ExpenseBill) (dto.ExpenseBillResponse, error)
 }

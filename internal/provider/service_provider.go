@@ -61,23 +61,6 @@ func ProvideServices(
 		profileService,
 	)
 
-	groupExpenseService := service.NewGroupExpenseService(
-		friendshipService,
-		debtService,
-		profileService,
-		clients.GroupExpense,
-	)
-
-	expenseItemSvc := service.NewExpenseItemService(
-		profileService,
-		clients.ExpenseItem,
-	)
-
-	otherFeeSvc := service.NewOtherFeeService(
-		profileService,
-		clients.OtherFee,
-	)
-
 	expenseBillService := service.NewExpenseBillService(
 		logger,
 		friendshipService,
@@ -86,6 +69,27 @@ func ProvideServices(
 		clients.ImageUpload,
 		cfg.BucketNameExpenseBill,
 		queues.ExpenseBillUploaded,
+	)
+
+	groupExpenseService := service.NewGroupExpenseService(
+		friendshipService,
+		debtService,
+		profileService,
+		clients.GroupExpense,
+		clients.ExpenseV1,
+		clients.ExpenseV2,
+		expenseBillService,
+	)
+
+	expenseItemSvc := service.NewExpenseItemService(
+		profileService,
+		clients.ExpenseItem,
+		clients.ItemV1,
+	)
+
+	otherFeeSvc := service.NewOtherFeeService(
+		profileService,
+		clients.OtherFee,
 	)
 
 	return &Services{

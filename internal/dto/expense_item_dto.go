@@ -8,10 +8,8 @@ import (
 )
 
 type ItemParticipantResponse struct {
-	ProfileName string          `json:"profileName"`
-	ProfileID   uuid.UUID       `json:"profileId"`
-	Share       decimal.Decimal `json:"share"`
-	IsUser      bool            `json:"isUser"`
+	Profile    SimpleProfile   `json:"profile"`
+	ShareRatio decimal.Decimal `json:"shareRatio"`
 }
 
 type ExpenseItemResponse struct {
@@ -47,4 +45,11 @@ type NewExpenseItemRequest struct {
 	Name           string          `json:"name" binding:"required,min=3"`
 	Amount         decimal.Decimal `json:"amount" binding:"required"`
 	Quantity       int             `json:"quantity" binding:"required,min=1"`
+}
+
+type SyncItemParticipantsRequest struct {
+	ProfileID      uuid.UUID                `json:"-"`
+	ID             uuid.UUID                `json:"-"`
+	GroupExpenseID uuid.UUID                `json:"-"`
+	Participants   []ItemParticipantRequest `json:"participants" binding:"dive"`
 }

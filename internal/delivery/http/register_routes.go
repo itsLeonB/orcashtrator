@@ -72,15 +72,19 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 					groupExpenseRoutes.GET("", handlers.GroupExpense.HandleGetAllCreated())
 					groupExpenseRoutes.GET(fmt.Sprintf("/:%s", appconstant.ContextGroupExpenseID), handlers.GroupExpense.HandleGetDetails())
 					groupExpenseRoutes.PATCH(fmt.Sprintf("/:%s/confirmed", appconstant.ContextGroupExpenseID), handlers.GroupExpense.HandleConfirmDraft())
+					groupExpenseRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextGroupExpenseID), handlers.GroupExpense.HandleDelete())
+					groupExpenseRoutes.GET("/fee-calculation-methods", handlers.OtherFee.HandleGetFeeCalculationMethods())
+					groupExpenseRoutes.PUT(fmt.Sprintf("/:%s/participants", appconstant.ContextGroupExpenseID.String()), handlers.GroupExpense.HandleSyncParticipants())
 				}
 
-				expenseItemRoute := fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID)
 				expenseItemRoutes := groupExpenseRoutes.Group(fmt.Sprintf("/:%s/items", appconstant.ContextGroupExpenseID))
 				{
+					expenseItemRoute := fmt.Sprintf("/:%s", appconstant.ContextExpenseItemID)
 					expenseItemRoutes.POST("", handlers.ExpenseItem.HandleAdd())
 					expenseItemRoutes.GET(expenseItemRoute, handlers.ExpenseItem.HandleGetDetails())
 					expenseItemRoutes.PUT(expenseItemRoute, handlers.ExpenseItem.HandleUpdate())
 					expenseItemRoutes.DELETE(expenseItemRoute, handlers.ExpenseItem.HandleRemove())
+					expenseItemRoutes.PUT(expenseItemRoute+"/participants", handlers.ExpenseItem.HandleSyncParticipants())
 				}
 
 				otherFeeRoutes := groupExpenseRoutes.Group(fmt.Sprintf("/:%s/fees", appconstant.ContextGroupExpenseID))
@@ -90,8 +94,6 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 					otherFeeRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextOtherFeeID), handlers.OtherFee.HandleRemove())
 				}
 
-				groupExpenseRoutes.GET("/fee-calculation-methods", handlers.OtherFee.HandleGetFeeCalculationMethods())
-
 				expenseBillRoutes := groupExpenseRoutes.Group("/bills")
 				{
 					expenseBillRoutes.POST("", handlers.ExpenseBill.HandleSave())
@@ -100,6 +102,13 @@ func registerRoutes(router *gin.Engine, configs config.Config, logger ezutil.Log
 					expenseBillRoutes.DELETE(fmt.Sprintf("/:%s", appconstant.ContextExpenseBillID.String()), handlers.ExpenseBill.HandleDelete())
 				}
 			}
+		}
+
+		v2 := apiRoutes.Group("/v2")
+		protectedRoutes := v2.Group("/", middlewares.auth)
+		{
+			protectedRoutes.POST("/group-expenses", handlers.GroupExpense.HandleCreateDraftV2())
+			protectedRoutes.POST(fmt.Sprintf("/group-expenses/:%s/bills", appconstant.ContextGroupExpenseID.String()), handlers.ExpenseBill.HandleSaveV2())
 		}
 	}
 }

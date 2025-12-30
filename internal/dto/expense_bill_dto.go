@@ -5,27 +5,31 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 )
 
 type NewExpenseBillRequest struct {
-	CreatorProfileID uuid.UUID
-	PayerProfileID   uuid.UUID
 	ImageReader      io.ReadCloser
-	ContentType      string
-	Filename         string
-	FileSize         int64
+	CreatorProfileID uuid.UUID
+	// Deprecated: will be deferred to other API
+	PayerProfileID uuid.UUID
+	GroupExpenseID uuid.UUID
+	ContentType    string
+	Filename       string
+	FileSize       int64
 }
 
 type ExpenseBillResponse struct {
-	ID                 uuid.UUID `json:"id"`
-	CreatorProfileID   uuid.UUID `json:"creatorProfileId"`
-	PayerProfileID     uuid.UUID `json:"payerProfileId"`
-	ImageURL           string    `json:"imageUrl"`
-	CreatedAt          time.Time `json:"createdAt"`
-	UpdatedAt          time.Time `json:"updatedAt"`
-	DeletedAt          time.Time `json:"deletedAt,omitzero"`
-	IsCreatedByUser    bool      `json:"isCreatedByUser"`
-	IsPaidByUser       bool      `json:"isPaidByUser"`
-	CreatorProfileName string    `json:"creatorProfileName"`
-	PayerProfileName   string    `json:"payerProfileName"`
+	ID                 uuid.UUID              `json:"id"`
+	CreatorProfileID   uuid.UUID              `json:"creatorProfileId"`
+	PayerProfileID     uuid.UUID              `json:"payerProfileId"`
+	ImageURL           string                 `json:"imageUrl"`
+	Status             appconstant.BillStatus `json:"status"`
+	CreatedAt          time.Time              `json:"createdAt"`
+	UpdatedAt          time.Time              `json:"updatedAt"`
+	DeletedAt          time.Time              `json:"deletedAt,omitzero"`
+	IsCreatedByUser    bool                   `json:"isCreatedByUser"`
+	IsPaidByUser       bool                   `json:"isPaidByUser"`
+	CreatorProfileName string                 `json:"creatorProfileName"`
+	PayerProfileName   string                 `json:"payerProfileName"`
 }

@@ -4,6 +4,8 @@ import (
 	"context"
 
 	"github.com/google/uuid"
+	expenseitemV1 "github.com/itsLeonB/billsplittr-protos/gen/go/expenseitem/v1"
+	"github.com/itsLeonB/ezutil/v2"
 	"github.com/itsLeonB/orcashtrator/internal/appconstant"
 	"github.com/itsLeonB/orcashtrator/internal/domain/expenseitem"
 	"github.com/itsLeonB/orcashtrator/internal/dto"
@@ -14,15 +16,18 @@ import (
 type expenseItemServiceImpl struct {
 	profileService    ProfileService
 	expenseItemClient expenseitem.ExpenseItemClient
+	clientV1          expenseitemV1.ExpenseItemServiceClient
 }
 
 func NewExpenseItemService(
 	profileService ProfileService,
 	expenseItemClient expenseitem.ExpenseItemClient,
+	clientV1 expenseitemV1.ExpenseItemServiceClient,
 ) ExpenseItemService {
 	return &expenseItemServiceImpl{
 		profileService,
 		expenseItemClient,
+		clientV1,
 	}
 }
 
@@ -44,12 +49,12 @@ func (ges *expenseItemServiceImpl) Add(ctx context.Context, req dto.NewExpenseIt
 
 	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
-	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
+	profilesByID, err := ges.profileService.GetByIDs(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, profilesByID), nil
 }
 
 func (ges *expenseItemServiceImpl) GetDetails(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) (dto.ExpenseItemResponse, error) {
@@ -65,12 +70,12 @@ func (ges *expenseItemServiceImpl) GetDetails(ctx context.Context, groupExpenseI
 
 	profileIDs := []uuid.UUID{userProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
-	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
+	profilesByID, err := ges.profileService.GetByIDs(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, userProfileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, userProfileID, profilesByID), nil
 }
 
 func (ges *expenseItemServiceImpl) Update(ctx context.Context, req dto.UpdateExpenseItemRequest) (dto.ExpenseItemResponse, error) {
@@ -92,12 +97,12 @@ func (ges *expenseItemServiceImpl) Update(ctx context.Context, req dto.UpdateExp
 
 	profileIDs := []uuid.UUID{req.UserProfileID}
 	profileIDs = append(profileIDs, expenseItem.ProfileIDs()...)
-	namesByProfileID, err := ges.profileService.GetNames(ctx, profileIDs)
+	profilesByID, err := ges.profileService.GetByIDs(ctx, profileIDs)
 	if err != nil {
 		return dto.ExpenseItemResponse{}, err
 	}
 
-	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, namesByProfileID), nil
+	return mapper.ExpenseItemToResponse(expenseItem, req.UserProfileID, profilesByID), nil
 }
 
 func (ges *expenseItemServiceImpl) Remove(ctx context.Context, groupExpenseID, expenseItemID, userProfileID uuid.UUID) error {
@@ -108,4 +113,16 @@ func (ges *expenseItemServiceImpl) Remove(ctx context.Context, groupExpenseID, e
 	}
 
 	return ges.expenseItemClient.Remove(ctx, request)
+}
+
+func (ges *expenseItemServiceImpl) SyncParticipants(ctx context.Context, req dto.SyncItemParticipantsRequest) error {
+	request := &expenseitemV1.SyncParticipantsRequest{
+		ProfileId:    req.ProfileID.String(),
+		ItemId:       req.ID.String(),
+		ExpenseId:    req.GroupExpenseID.String(),
+		Participants: ezutil.MapSlice(req.Participants, mapper.ToItemParticipantProto),
+	}
+
+	_, err := ges.clientV1.SyncParticipants(ctx, request)
+	return err
 }
